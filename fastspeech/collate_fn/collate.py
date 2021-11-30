@@ -26,13 +26,6 @@ def collate_fn(instances: List[Tuple]) -> Dict:
     ]).transpose(0, 1)
     token_lengths = torch.cat(token_lengths)
 
-    device = torch.device('cuda:0')
-    aligner = GraphemeAligner().to("cuda:0")
-    with torch.no_grad():
-        duration = aligner(
-            waveform.to(device), waveform_length, transcript
-        )
-
     # if duration is not None and duration[0] is not None:
     #     duration = pad_sequence([
     #         duration_[0] for duration_ in duration
@@ -41,5 +34,5 @@ def collate_fn(instances: List[Tuple]) -> Dict:
 
     return {"audio": waveform, "audio_length": waveform_length,
             "text": transcript, "text_encoded": tokens,
-            "token_lengths": token_lengths, "duration": duration,
+            "token_lengths": token_lengths,
             "melspec": audio_spec, "sample_rate": sr}
