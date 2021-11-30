@@ -55,11 +55,11 @@ class FeedForwardTransformer(nn.Module):
 
 
 class DurationPredictor(nn.Module):
-    def __init__(self, emb_size, kernel_size, alpha):
+    def __init__(self, emb_size, hidden_size, kernel_size, alpha):
         super(DurationPredictor, self).__init__()
-        self.conv1 = nn.Conv1d(emb_size, emb_size, kernel_size)
+        self.conv1 = nn.Conv1d(emb_size, hidden_size, kernel_size)
         self.norm1 = nn.LayerNorm(emb_size)
-        self.conv2 = nn.Conv1d(emb_size, emb_size, kernel_size)
+        self.conv2 = nn.Conv1d(hidden_size, emb_size, kernel_size)
         self.norm2 = nn.LayerNorm(emb_size)
         self.linear = nn.Linear(emb_size, 1)
         self.alpha = alpha
@@ -150,7 +150,8 @@ class Vocoder(nn.Module):
 
 class FastSpeechModel(BaseModel):
     def __init__(self, emb_size, max_len, num_blocks, n_heads, kernel_size,
-                 predictor_kernel_size, alpha, mels, *args, **kwargs):
+                 predictor_hidden_size, predictor_kernel_size, alpha, mels,
+                 *args, **kwargs):
         super().__init__(*args, **kwargs)
         vocab_size = len(torchaudio.pipelines.
                          WAV2VEC2_ASR_BASE_960H.get_labels())
@@ -169,6 +170,7 @@ class FastSpeechModel(BaseModel):
                                                  kernel_size))
         self.fft1 = nn.Sequential(*blocks)
         self.duration_predictor = DurationPredictor(emb_size,
+                                                    predictor_hidden_size,
                                                     predictor_kernel_size,
                                                     alpha)
         blocks = []

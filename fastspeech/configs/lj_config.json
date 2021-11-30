@@ -1,7 +1,7 @@
 {
   "name": "lj_config",
   "n_gpu": 1,
-  "overfit_on_one_batch": "False",
+  "overfit_on_one_batch": "True",
   "preprocessing": {
     "sr": 22050,
     "spectrogram": {
@@ -13,41 +13,42 @@
   "arch": {
     "type": "FastSpeech",
     "args": {
+        "emb_size": 384,
+        "max_len": 5000,
+        "num_blocks": 6,
+        "n_heads": 2,
+        "kernel_size": 3,
+        "predictor_hidden_size": 1536,
+        "predictor_kernel_size": 3,
+        "alpha": 1,
+        "mels": 80
     }
   },
   "data": {
     "all": {
-      "batch_size": 128,
+      "batch_size": 1,
       "num_workers": 5,
       "test_share": 0.2,
       "datasets": [
         {
-          "type": "LJDataset",
+          "type": "LJSpeechDataset",
           "args": {
-            "max_audio_length": 20.0,
-            "max_text_length": 200
           }
         }
       ]
     }
   },
   "optimizer": {
-    "type": "SGD",
+    "type": "Adam",
     "args": {
-      "lr": 0.1,
-      "momentum": 0.9
+      "lr": 3e-4,
+      "betas": [0.9, 0.98],
+      "eps": 1e-9
     }
   },
   "loss": {
-    "type": "CTCLoss",
+    "type": "FastSpeechLoss",
     "args": {}
-  },
-  "lr_scheduler": {
-    "type": "ReduceLROnPlateau",
-    "args": {
-      "patience": 2
-    },
-    "frequency": "epoch"
   },
   "trainer": {
     "epochs": 50,
