@@ -16,7 +16,7 @@
         "emb_size": 384,
         "max_len": 5000,
         "num_blocks": 6,
-        "n_heads": 2,
+        "n_heads": 1,
         "kernel_size": 3,
         "fft_hidden_size": 1536,
         "dropout_p": 0.1,
@@ -45,6 +45,13 @@
       "lr": 3e-4,
       "betas": [0.9, 0.98],
       "eps": 1e-9
+    }
+  },
+  "lr_scheduler": {
+    "type": "OneCycleLR",
+    "args": {
+      "max_lr": 3e-4,
+      "total_steps": 80000
     }
   },
   "loss": {
