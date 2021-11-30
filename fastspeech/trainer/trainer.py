@@ -9,6 +9,7 @@ from tqdm import tqdm
 from fastspeech.base import BaseTrainer
 from fastspeech.logger.utils import plot_spectrogram_to_buf
 from fastspeech.utils import inf_loop, MetricTracker
+from fastspeech.model import Vocoder
 
 
 def get_lr(optimizer):
@@ -54,6 +55,7 @@ class Trainer(BaseTrainer):
         self.scheduler_frequency_of_update = scheduler_frequency_of_update
         self.beam_search = beam_search
         self.log_step = 10
+        self.vocoder = Vocoder()
 
         self.train_metrics = MetricTracker(
             "loss", "grad norm", "duration_loss", "melspec_loss",
@@ -154,6 +156,10 @@ class Trainer(BaseTrainer):
             self.optimizer.zero_grad()
         outputs = self.model(**batch)
         batch.update(outputs)
+        with torch.no_grad():
+            self.vocoder.eval()
+            batch["output_audio"] = self.vocoder.inference(
+                batch["output_melspec"])
         loss_dict = self.criterion(**batch)
         batch["loss"] = loss_dict["loss"]
         if is_train:
