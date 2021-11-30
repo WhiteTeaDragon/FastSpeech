@@ -17,7 +17,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
         if data_dir is None:
             data_dir = ROOT_PATH / "data" / "datasets" / "lj"
             data_dir.mkdir(exist_ok=True, parents=True)
-        super().__init__(root=data_dir)
+        super().__init__(root=data_dir, download=True)
         self.durations = None
         self.durations = self.load_durations(data_dir, device, num_workers)
         self.config_parser = config_parser
