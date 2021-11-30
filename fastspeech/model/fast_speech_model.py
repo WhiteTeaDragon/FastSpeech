@@ -38,11 +38,17 @@ class MultiHeadedAttention(nn.Module):
 
 
 class FeedForwardTransformer(nn.Module):
-    def __init__(self, n_heads, emb_size, kernel_size):
+    def __init__(self, n_heads, emb_size, hidden_size, kernel_size,
+                 dropout_p):
         super(FeedForwardTransformer, self).__init__()
         self.attention = MultiHeadedAttention(n_heads, emb_size)
         self.norm1 = nn.LayerNorm(emb_size)
-        self.conv = nn.Conv1d(emb_size, emb_size, kernel_size)
+        self.conv = nn.Sequential(
+            nn.Conv1d(emb_size, hidden_size, kernel_size),
+            nn.ReLU(),
+            nn.Conv1d(hidden_size, emb_size, kernel_size),
+            nn.Dropout(p=dropout_p)
+        )
         self.norm2 = nn.LayerNorm(emb_size)
 
     def forward(self, inputs):
@@ -91,8 +97,8 @@ def length_regulation(inputs, durations):
 
 class FastSpeechModel(BaseModel):
     def __init__(self, emb_size, max_len, num_blocks, n_heads, kernel_size,
-                 predictor_hidden_size, predictor_kernel_size, alpha, mels,
-                 *args, **kwargs):
+                 fft_hidden_size, dropout_p, predictor_kernel_size, alpha,
+                 mels, *args, **kwargs):
         super().__init__(*args, **kwargs)
         vocab_size = len(torchaudio.pipelines.
                          WAV2VEC2_ASR_BASE_960H.get_labels())
@@ -108,16 +114,18 @@ class FastSpeechModel(BaseModel):
         blocks = []
         for i in range(num_blocks):
             blocks.append(FeedForwardTransformer(n_heads, emb_size,
-                                                 kernel_size))
+                                                 fft_hidden_size, kernel_size,
+                                                 dropout_p))
         self.fft1 = nn.Sequential(*blocks)
         self.duration_predictor = DurationPredictor(emb_size,
-                                                    predictor_hidden_size,
+                                                    emb_size,
                                                     predictor_kernel_size,
                                                     alpha)
         blocks = []
         for i in range(num_blocks):
             blocks.append(FeedForwardTransformer(n_heads, emb_size,
-                                                 kernel_size))
+                                                 fft_hidden_size, kernel_size,
+                                                 dropout_p))
         self.fft2 = nn.Sequential(*blocks)
         self.linear = nn.Linear(emb_size, mels)
 
