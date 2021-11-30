@@ -17,6 +17,9 @@ class MultiHeadedAttention(nn.Module):
             self.queries.append(nn.Linear(emb_size, emb_size))
             self.keys.append(nn.Linear(emb_size, emb_size))
             self.values.append(nn.Linear(emb_size, emb_size))
+        self.queries = nn.ModuleList(self.queries)
+        self.keys = nn.ModuleList(self.keys)
+        self.values = nn.ModuleList(self.values)
         self.w_final = nn.Linear(emb_size * n_heads, emb_size)
 
     def forward(self, inputs):
