@@ -23,7 +23,7 @@ def collate_fn(instances: List[Tuple]) -> Dict:
     ]).transpose(0, 1)
     token_lengths = torch.cat(token_lengths)
 
-    if duration is not None:
+    if duration is not None and duration[0] is not None:
         duration = pad_sequence([
             duration_[0] for duration_ in duration
         ]).transpose(0, 1)
