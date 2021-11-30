@@ -11,7 +11,7 @@
     }
   },
   "arch": {
-    "type": "FastSpeech",
+    "type": "FastSpeechModel",
     "args": {
         "emb_size": 384,
         "max_len": 5000,
