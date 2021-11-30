@@ -49,6 +49,7 @@
   },
   "lr_scheduler": {
     "type": "OneCycleLR",
+    "frequency": "batch",
     "args": {
       "max_lr": 3e-4,
       "total_steps": 80000
