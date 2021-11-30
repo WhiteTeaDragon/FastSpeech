@@ -27,7 +27,7 @@ def main(config):
 
     device, device_ids = prepare_device(config["n_gpu"])
     # setup data_loader instances
-    dataloaders, text_encoder = get_dataloaders(config, device)
+    dataloaders = get_dataloaders(config, device)
     if config["overfit_on_one_batch"] == "True":
         dataloaders["train"] = [next(iter(dataloaders["train"]))]
         dataloaders["val"] = [next(iter(dataloaders["val"]))]
