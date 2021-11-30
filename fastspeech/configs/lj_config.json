@@ -18,7 +18,8 @@
         "num_blocks": 6,
         "n_heads": 2,
         "kernel_size": 3,
-        "predictor_hidden_size": 1536,
+        "fft_hidden_size": 1536,
+        "dropout_p": 0.1,
         "predictor_kernel_size": 3,
         "alpha": 1,
         "mels": 80
