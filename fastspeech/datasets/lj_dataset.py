@@ -31,8 +31,8 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
             durations = torch.from_numpy(np.load(durations_file))
         else:
             aligner = GraphemeAligner(config_parser).to(device)
-            dataloader = DataLoader(self, batch_size=1, collate_fn=collate_fn,
-                                    shuffle=False, num_workers=num_workers)
+            dataloader = DataLoader(self, batch_size=32, collate_fn=collate_fn,
+                                    shuffle=False, num_workers=1)
             len_epoch = len(dataloader)
             durations = None
             for batch_idx, batch in enumerate(
