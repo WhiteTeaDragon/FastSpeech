@@ -19,17 +19,18 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
             data_dir.mkdir(exist_ok=True, parents=True)
         super().__init__(root=data_dir, download=True)
         self.durations = None
-        self.durations = self.load_durations(data_dir, device, num_workers)
+        self.durations = self.load_durations(data_dir, device, num_workers,
+                                             config_parser)
         self.config_parser = config_parser
         self._tokenizer = torchaudio.pipelines. \
             TACOTRON2_GRIFFINLIM_CHAR_LJSPEECH.get_text_processor()
 
-    def load_durations(self, data_dir, device, num_workers):
+    def load_durations(self, data_dir, device, num_workers, config_parser):
         durations_file = data_dir / "durations.npy"
-        if durations_file.exists:
+        if durations_file.exists():
             durations = torch.from_numpy(np.load(durations_file))
         else:
-            aligner = GraphemeAligner().to(device)
+            aligner = GraphemeAligner(config_parser).to(device)
             dataloader = DataLoader(self, batch_size=4, collate_fn=collate_fn,
                                     shuffle=False, num_workers=num_workers)
             len_epoch = len(dataloader)

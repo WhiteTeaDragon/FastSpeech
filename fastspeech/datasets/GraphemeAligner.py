@@ -111,7 +111,6 @@ def _merge_repeats(text, path):
 
 
 class GraphemeAligner(nn.Module):
-
     def __init__(self, config_parser):
         super().__init__()
 
