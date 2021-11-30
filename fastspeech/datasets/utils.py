@@ -19,13 +19,13 @@ def get_dataloaders(configs: ConfigParser, device):
                                    device, num_workers, configs)
         assert "test_share" in params, "You must specify share of test " \
                                        "examples"
-        train_dataset, test_dataset = dataset[:1], dataset[:1]
+        train_dataset, test_dataset = dataset, dataset
         # select batch size or batch sampler
         assert "batch_size" in params,\
             "You must provide batch_size for each split"
         if "batch_size" in params:
             bs = params["batch_size"]
-            shuffle = True
+            shuffle = False
         else:
             raise Exception()
         train_dataloader = DataLoader(
