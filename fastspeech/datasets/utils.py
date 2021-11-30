@@ -19,11 +19,7 @@ def get_dataloaders(configs: ConfigParser, device):
                                    device, num_workers, configs)
         assert "test_share" in params, "You must specify share of test " \
                                        "examples"
-        test_share = float(params["test_share"])
-        test_size = int(test_share * len(dataset))
-        train_size = len(dataset) - test_size
-        train_dataset, test_dataset = torch.utils.data.random_split(
-            dataset, [train_size, test_size])
+        train_dataset, test_dataset = dataset[:1], dataset[:1]
         # select batch size or batch sampler
         assert "batch_size" in params,\
             "You must provide batch_size for each split"

@@ -31,7 +31,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
             durations = torch.from_numpy(np.load(durations_file))
         else:
             aligner = GraphemeAligner(config_parser).to(device)
-            dataloader = DataLoader(self, batch_size=4, collate_fn=collate_fn,
+            dataloader = DataLoader(self, batch_size=1, collate_fn=collate_fn,
                                     shuffle=False, num_workers=num_workers)
             len_epoch = len(dataloader)
             durations = None
@@ -47,6 +47,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
                     durations = curr_durations
                 else:
                     durations = torch.cat((durations, curr_durations))
+                break
             np.save(durations_file, durations)
         return durations
 
@@ -57,7 +58,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
 
         tokens, token_lengths = self._tokenizer(transcript)
         duration = None
-        if self.durations is not None:
+        if self.durations is not None and index < len(self.durations):
             duration = self.durations[index]
 
         return waveform, waveform_length, transcript, tokens, token_lengths, \

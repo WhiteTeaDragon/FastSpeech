@@ -28,8 +28,6 @@ def main(config):
     device, device_ids = prepare_device(config["n_gpu"])
     # setup data_loader instances
     dataloaders, text_encoder = get_dataloaders(config, device)
-    if config["overfit_on_one_batch"] == "True":
-        dataloaders["train"] = [next(iter(dataloaders["train"]))]
 
     # build model architecture, then print to console
     model = config.init_obj(config["arch"], module_arch,
