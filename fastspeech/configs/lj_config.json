@@ -1,0 +1,64 @@
+{
+  "name": "lj_config",
+  "n_gpu": 1,
+  "overfit_on_one_batch": "False",
+  "preprocessing": {
+    "sr": 22050,
+    "spectrogram": {
+      "type": "MelSpectrogram",
+      "args": {
+      }
+    }
+  },
+  "arch": {
+    "type": "FastSpeech",
+    "args": {
+    }
+  },
+  "data": {
+    "all": {
+      "batch_size": 128,
+      "num_workers": 5,
+      "test_share": 0.2,
+      "datasets": [
+        {
+          "type": "LJDataset",
+          "args": {
+            "max_audio_length": 20.0,
+            "max_text_length": 200
+          }
+        }
+      ]
+    }
+  },
+  "optimizer": {
+    "type": "SGD",
+    "args": {
+      "lr": 0.1,
+      "momentum": 0.9
+    }
+  },
+  "loss": {
+    "type": "CTCLoss",
+    "args": {}
+  },
+  "lr_scheduler": {
+    "type": "ReduceLROnPlateau",
+    "args": {
+      "patience": 2
+    },
+    "frequency": "epoch"
+  },
+  "trainer": {
+    "epochs": 50,
+    "save_dir": "saved/",
+    "save_period": 5,
+    "verbosity": 2,
+    "monitor": "min val_loss",
+    "early_stop": 100,
+    "wandb_project": "fastspeech",
+    "len_epoch": 500,
+    "grad_norm_clip": 2,
+    "beam_search": "False"
+  }
+}
