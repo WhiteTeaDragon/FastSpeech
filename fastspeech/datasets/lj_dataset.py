@@ -22,34 +22,34 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
         self._tokenizer = torchaudio.pipelines. \
             TACOTRON2_GRIFFINLIM_CHAR_LJSPEECH.get_text_processor()
         self.durations = None
-        self.durations = self.load_durations(data_dir, device, num_workers,
-                                             config_parser)
+        # self.durations = self.load_durations(data_dir, device, num_workers,
+        #                                      config_parser)
 
-    def load_durations(self, data_dir, device, num_workers, config_parser):
-        durations_file = data_dir / "durations.npy"
-        if durations_file.exists():
-            durations = torch.from_numpy(np.load(durations_file))
-        else:
-            aligner = GraphemeAligner(config_parser).to(device)
-            dataloader = DataLoader(self, batch_size=32, collate_fn=collate_fn,
-                                    shuffle=False, num_workers=1)
-            len_epoch = len(dataloader)
-            durations = None
-            for batch_idx, batch in enumerate(
-                    tqdm(dataloader, desc="graphemes", total=len_epoch)
-            ):
-                with torch.no_grad():
-                    curr_durations = aligner(
-                        batch["audio"].to(device), batch["audio_length"],
-                        batch["text"]
-                    )
-                if durations is None:
-                    durations = curr_durations
-                else:
-                    durations = torch.cat((durations, curr_durations))
-                break
-            np.save(durations_file, durations)
-        return durations
+    # def load_durations(self, data_dir, device, num_workers, config_parser):
+    #     durations_file = data_dir / "durations.npy"
+    #     if durations_file.exists():
+    #         durations = torch.from_numpy(np.load(durations_file))
+    #     else:
+    #         aligner = GraphemeAligner(config_parser).to(device)
+    #         dataloader = DataLoader(self, batch_size=32, collate_fn=collate_fn,
+    #                                 shuffle=False, num_workers=1)
+    #         len_epoch = len(dataloader)
+    #         durations = None
+    #         for batch_idx, batch in enumerate(
+    #                 tqdm(dataloader, desc="graphemes", total=len_epoch)
+    #         ):
+    #             with torch.no_grad():
+    #                 curr_durations = aligner(
+    #                     batch["audio"].to(device), batch["audio_length"],
+    #                     batch["text"]
+    #                 )
+    #             if durations is None:
+    #                 durations = curr_durations
+    #             else:
+    #                 durations = torch.cat((durations, curr_durations))
+    #             break
+    #         np.save(durations_file, durations)
+    #     return durations
 
     def __getitem__(self, index: int):
         waveform, _, _, transcript = super().__getitem__(index)
@@ -62,7 +62,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
             duration = self.durations[index]
 
         return waveform, waveform_length, transcript, tokens, token_lengths, \
-            duration, audio_spec, sr
+            audio_spec, sr
 
     def decode(self, tokens, lengths):
         result = []

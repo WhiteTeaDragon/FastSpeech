@@ -111,7 +111,7 @@ def _merge_repeats(text, path):
 
 
 class GraphemeAligner(nn.Module):
-    def __init__(self, config_parser):
+    def __init__(self):
         super().__init__()
 
         self._wav2vec2 = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H.get_model(
@@ -119,7 +119,7 @@ class GraphemeAligner(nn.Module):
         self._labels = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H.get_labels()
         self._char2index = {c: i for i, c in enumerate(self._labels)}
         self._unk_index = self._char2index['<unk>']
-        sr = config_parser["preprocessing"]["sr"]
+        sr = 22050
         self._resampler = torchaudio.transforms.Resample(
             orig_freq=sr, new_freq=16_000
         )

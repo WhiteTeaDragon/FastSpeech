@@ -2,6 +2,9 @@ import logging
 from typing import List, Tuple, Dict
 import torch
 from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import DataLoader
+
+from fastspeech.datasets.GraphemeAligner import GraphemeAligner
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +13,7 @@ def collate_fn(instances: List[Tuple]) -> Dict:
     """
     Collate and pad fields in dataset items
     """
-    waveform, waveform_length, transcript, tokens, token_lengths, duration, \
+    waveform, waveform_length, transcript, tokens, token_lengths, \
         audio_spec, sr = list(zip(*instances))
 
     waveform = pad_sequence([
@@ -23,11 +26,18 @@ def collate_fn(instances: List[Tuple]) -> Dict:
     ]).transpose(0, 1)
     token_lengths = torch.cat(token_lengths)
 
-    if duration is not None and duration[0] is not None:
-        duration = pad_sequence([
-            duration_[0] for duration_ in duration
-        ]).transpose(0, 1)
-        duration = torch.cat(duration)
+    device = torch.device('cuda:0')
+    aligner = GraphemeAligner().to("cuda:0")
+    with torch.no_grad():
+        duration = aligner(
+            waveform.to(device), waveform_length, transcript
+        )
+
+    # if duration is not None and duration[0] is not None:
+    #     duration = pad_sequence([
+    #         duration_[0] for duration_ in duration
+    #     ]).transpose(0, 1)
+    #     duration = torch.cat(duration)
 
     return {"audio": waveform, "audio_length": waveform_length,
             "text": transcript, "text_encoded": tokens,
