@@ -30,7 +30,6 @@ class Trainer(BaseTrainer):
             config,
             device,
             data_loader,
-            text_encoder,
             valid_data_loader=None,
             lr_scheduler=None,
             len_epoch=None,
@@ -40,7 +39,6 @@ class Trainer(BaseTrainer):
     ):
         super().__init__(model, criterion, metrics, optimizer, config, device)
         self.skip_oom = skip_oom
-        self.text_encoder = text_encoder
         self.config = config
         self.data_loader = data_loader
         if len_epoch is None:

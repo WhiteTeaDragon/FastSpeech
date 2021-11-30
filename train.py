@@ -28,13 +28,9 @@ def main(config):
     device, device_ids = prepare_device(config["n_gpu"])
     # setup data_loader instances
     dataloaders = get_dataloaders(config, device)
-    if config["overfit_on_one_batch"] == "True":
-        dataloaders["train"] = [next(iter(dataloaders["train"]))]
-        dataloaders["val"] = [next(iter(dataloaders["val"]))]
 
     # build model architecture, then print to console
-    model = config.init_obj(config["arch"], module_arch,
-                            n_class=len(text_encoder))
+    model = config.init_obj(config["arch"], module_arch)
     logger.info(model)
 
     # prepare for (multi-device) GPU training
@@ -65,7 +61,6 @@ def main(config):
         loss_module,
         metrics,
         optimizer,
-        text_encoder=text_encoder,
         config=config,
         device=device,
         data_loader=dataloaders["train"],

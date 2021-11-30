@@ -58,7 +58,7 @@
     "monitor": "min val_loss",
     "early_stop": 100,
     "wandb_project": "fastspeech",
-    "len_epoch": 500,
+    "len_epoch": 1,
     "grad_norm_clip": 2,
     "beam_search": "False"
   }
