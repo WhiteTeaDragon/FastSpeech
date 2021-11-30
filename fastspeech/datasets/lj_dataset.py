@@ -18,10 +18,10 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
             data_dir = ROOT_PATH / "data" / "datasets" / "lj"
             data_dir.mkdir(exist_ok=True, parents=True)
         super().__init__(root=data_dir, download=True)
+        self.config_parser = config_parser
         self.durations = None
         self.durations = self.load_durations(data_dir, device, num_workers,
                                              config_parser)
-        self.config_parser = config_parser
         self._tokenizer = torchaudio.pipelines. \
             TACOTRON2_GRIFFINLIM_CHAR_LJSPEECH.get_text_processor()
 
