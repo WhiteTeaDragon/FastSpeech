@@ -5,8 +5,11 @@ import torchaudio
 import torch
 from fastspeech.utils import ROOT_PATH
 from google_drive_downloader import GoogleDriveDownloader as gdd
+import sys
 
 from fastspeech.base import BaseModel
+
+sys.path.append('waveglow/')
 
 
 class MultiHeadedAttention(nn.Module):
