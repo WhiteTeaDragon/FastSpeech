@@ -54,8 +54,8 @@ class FeedForwardTransformer(nn.Module):
     def forward(self, inputs):
         after_attention = self.attention(inputs)
         inputs = after_attention + inputs
-        inputs = self.norm1(inputs)
-        after_conv = self.conv(inputs)
+        inputs = self.norm1(inputs).transpose(1, 2)
+        after_conv = self.conv(inputs).transpose(1, 2)
         inputs = after_conv + inputs
         inputs = self.norm2(inputs)
         return inputs
