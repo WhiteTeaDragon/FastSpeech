@@ -44,9 +44,9 @@ class FeedForwardTransformer(nn.Module):
         self.attention = MultiHeadedAttention(n_heads, emb_size)
         self.norm1 = nn.LayerNorm(emb_size)
         self.conv = nn.Sequential(
-            nn.Conv1d(emb_size, hidden_size, kernel_size),
+            nn.Conv1d(emb_size, hidden_size, kernel_size, padding="same"),
             nn.ReLU(),
-            nn.Conv1d(hidden_size, emb_size, kernel_size),
+            nn.Conv1d(hidden_size, emb_size, kernel_size, padding="same"),
             nn.Dropout(p=dropout_p)
         )
         self.norm2 = nn.LayerNorm(emb_size)
@@ -54,8 +54,8 @@ class FeedForwardTransformer(nn.Module):
     def forward(self, inputs):
         after_attention = self.attention(inputs)
         inputs = after_attention + inputs
-        inputs = self.norm1(inputs).transpose(1, 2)
-        after_conv = self.conv(inputs).transpose(1, 2)
+        inputs = self.norm1(inputs)
+        after_conv = self.conv(inputs.transpose(1, 2)).transpose(1, 2)
         inputs = after_conv + inputs
         inputs = self.norm2(inputs)
         return inputs
@@ -72,22 +72,23 @@ class DurationPredictor(nn.Module):
         self.alpha = alpha
 
     def forward(self, inputs):
-        inputs = self.norm1(self.conv1(inputs))
-        inputs = self.norm2(self.conv2(inputs))
+        inputs = self.norm1(self.conv1(inputs.transpose(1, 2)).transpose(1, 2))
+        inputs = self.norm2(self.conv2(inputs.transpose(1, 2)).transpose(1, 2))
         return self.linear(inputs) * self.alpha
 
 
 def length_regulation(inputs, durations):
     final_res = None
-    batch, seq_len = inputs.shape
+    batch, seq_len, emb_size = inputs.shape
     for i in range(batch):
         curr_element = None
         for j in range(seq_len):
-            curr_res = inputs[i, j].repeat(1, durations[j])
+            curr_res = inputs[i, j].repeat(1, durations[i, j].int().item())
             if curr_element is None:
                 curr_element = curr_res
             else:
                 curr_element = torch.cat((curr_element, curr_res), dim=1)
+            print(i, j, curr_res.shape, durations[i, j].int().item())
         if final_res is None:
             final_res = curr_element
         else:
@@ -100,8 +101,7 @@ class FastSpeechModel(BaseModel):
                  fft_hidden_size, dropout_p, predictor_kernel_size, alpha,
                  mels, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        vocab_size = len(torchaudio.pipelines.
-                         WAV2VEC2_ASR_BASE_960H.get_labels())
+        vocab_size = 40
         self.embedding = nn.Embedding(vocab_size, emb_size)
         w = torch.Tensor([(1 / 10000) ** (2 * i / emb_size) for i in
                           range(1, emb_size // 2 + 1)])
@@ -140,9 +140,11 @@ class FastSpeechModel(BaseModel):
                                        torch.exp(duration_prediction))
         else:
             inputs = length_regulation(inputs, duration)
+        print(inputs.shape)
         batch, seq_len, emb_size = inputs.shape
         inputs = inputs + self.pos_enc[:seq_len]
         inputs = self.fft2(inputs)
         spectrogram = self.linear(inputs)
+        print("FINISHED")
         return {"output_melspec": spectrogram,
                 "output_duration": duration_prediction}
