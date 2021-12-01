@@ -158,7 +158,7 @@ class Trainer(BaseTrainer):
         with torch.no_grad():
             duration = self.aligner(
                 batch["audio"], batch["audio_length"], batch["text"]
-            )
+            ).to(self.device)
             coeff = batch["audio_length"] / 256
             duration = duration * coeff.repeat(duration.shape[-1],
                                                1).transpose(0, 1).to(
