@@ -36,7 +36,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
             self.config_parser["preprocessing"]["spectrogram"],
             torchaudio.transforms,
         )
-        wave2spec.fb.copy_(torch.tensor(mel_basis))
+        wave2spec.mel_scale.fb.copy_(torch.tensor(mel_basis))
         return wave2spec
 
     # def load_durations(self, data_dir, device, num_workers, config_parser):
