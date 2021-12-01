@@ -30,7 +30,7 @@ def main(config):
     dataloaders = get_dataloaders(config, device)
     if config["overfit_on_one_batch"]:
         dataloaders["train"] = [next(iter(dataloaders["train"]))]
-        dataloaders["val"] = dataloaders["train"]
+        dataloaders["val"] = None
 
     # build model architecture, then print to console
     model = config.init_obj(config["arch"], module_arch)
