@@ -56,7 +56,7 @@ class Trainer(BaseTrainer):
         self.scheduler_frequency_of_update = scheduler_frequency_of_update
         self.beam_search = beam_search
         self.log_step = 10
-        self.vocoder = Vocoder()
+        self.vocoder = Vocoder().to(self.device)
         self.aligner = GraphemeAligner().to(self.device)
 
         self.train_metrics = MetricTracker(
