@@ -161,7 +161,8 @@ class Trainer(BaseTrainer):
             )
             coeff = batch["audio_length"] / 256
             duration = duration * coeff.repeat(duration.shape[-1],
-                                               1).transpose(0, 1)
+                                               1).transpose(0, 1).to(
+                self.device)
         batch["duration"] = duration
         if is_train:
             self.optimizer.zero_grad()
