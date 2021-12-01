@@ -1,7 +1,6 @@
 import math
 
 from torch import nn
-import torchaudio
 import torch
 
 from fastspeech.base import BaseModel
@@ -83,7 +82,9 @@ def length_regulation(inputs, durations):
     for i in range(batch):
         curr_element = None
         for j in range(seq_len):
-            curr_res = inputs[i, j].repeat(1, durations[i, j].int().item(), 1)
+            curr_res = inputs[i, j].repeat(1,
+                                           torch.round(durations[i, j]).int().
+                                           item(), 1)
             if curr_element is None:
                 curr_element = curr_res
             else:
