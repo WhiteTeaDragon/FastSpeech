@@ -6,7 +6,7 @@ class FastSpeechLoss(torch.nn.Module):
         super().__init__()
 
     def forward(self, *args, **kwargs) -> dict:
-        duration_loss = torch.nn.functional.mse_loss(kwargs["output_duration"],
+        duration_loss = torch.nn.functional.mse_loss(kwargs["output_duration"].squeeze(-1),
                                                      torch.log(
                                                          kwargs["duration"]))
         slice_until = min(kwargs["output_melspec"].shape[-1],
