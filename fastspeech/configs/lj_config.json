@@ -56,11 +56,10 @@
     }
   },
   "lr_scheduler": {
-    "type": "OneCycleLR",
+    "type": "CosineAnnealingLR",
     "frequency": "batch",
     "args": {
-      "max_lr": 3e-4,
-      "total_steps": 80000
+      "T_max": 1500
     }
   },
   "loss": {
@@ -68,7 +67,7 @@
     "args": {}
   },
   "trainer": {
-    "epochs": 50,
+    "epochs": 1500,
     "save_dir": "saved/",
     "save_period": 5,
     "verbosity": 2,
