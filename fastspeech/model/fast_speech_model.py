@@ -129,17 +129,17 @@ class FastSpeechModel(BaseModel):
         self.fft2 = nn.Sequential(*blocks)
         self.linear = nn.Linear(emb_size, mels)
 
-    def forward(self, inputs, durations=None, *args, **kwargs):
-        inputs = self.embedding(inputs)
+    def forward(self, text_encoded, duration=None, *args, **kwargs):
+        inputs = self.embedding(text_encoded)
         batch, seq_len = inputs.shape
         inputs = inputs + self.pos_enc[:seq_len]
         inputs = self.fft1(inputs)
         duration_prediction = self.duration_predictor(inputs)
-        if durations is None:
+        if duration is None:
             inputs = length_regulation(inputs,
                                        torch.exp(duration_prediction))
         else:
-            inputs = length_regulation(inputs, durations)
+            inputs = length_regulation(inputs, duration)
         batch, seq_len = inputs.shape
         inputs = inputs + self.pos_enc[:seq_len]
         inputs = self.fft2(inputs)

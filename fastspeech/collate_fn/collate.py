@@ -35,4 +35,4 @@ def collate_fn(instances: List[Tuple]) -> Dict:
     return {"audio": waveform, "audio_length": waveform_length,
             "text": transcript, "text_encoded": tokens,
             "token_lengths": token_lengths,
-            "melspec": audio_spec, "sample_rate": sr}
+            "melspec": audio_spec[0], "sample_rate": sr}
