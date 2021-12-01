@@ -83,12 +83,11 @@ def length_regulation(inputs, durations):
     for i in range(batch):
         curr_element = None
         for j in range(seq_len):
-            curr_res = inputs[i, j].repeat(1, durations[i, j].int().item())
+            curr_res = inputs[i, j].repeat(1, durations[i, j].int().item(), 1)
             if curr_element is None:
                 curr_element = curr_res
             else:
                 curr_element = torch.cat((curr_element, curr_res), dim=1)
-            print(i, j, curr_res.shape, durations[i, j].int().item())
         if final_res is None:
             final_res = curr_element
         else:
@@ -140,11 +139,9 @@ class FastSpeechModel(BaseModel):
                                        torch.exp(duration_prediction))
         else:
             inputs = length_regulation(inputs, duration)
-        print(inputs.shape)
         batch, seq_len, emb_size = inputs.shape
         inputs = inputs + self.pos_enc[:seq_len]
         inputs = self.fft2(inputs)
         spectrogram = self.linear(inputs)
-        print("FINISHED")
-        return {"output_melspec": spectrogram,
+        return {"output_melspec": spectrogram.transpose(1, 2),
                 "output_duration": duration_prediction}
