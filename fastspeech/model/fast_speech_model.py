@@ -63,9 +63,9 @@ class FeedForwardTransformer(nn.Module):
 class DurationPredictor(nn.Module):
     def __init__(self, emb_size, hidden_size, kernel_size, alpha):
         super(DurationPredictor, self).__init__()
-        self.conv1 = nn.Conv1d(emb_size, hidden_size, kernel_size)
+        self.conv1 = nn.Conv1d(emb_size, hidden_size, kernel_size, padding="same")
         self.norm1 = nn.LayerNorm(emb_size)
-        self.conv2 = nn.Conv1d(hidden_size, emb_size, kernel_size)
+        self.conv2 = nn.Conv1d(hidden_size, emb_size, kernel_size, padding="same")
         self.norm2 = nn.LayerNorm(emb_size)
         self.linear = nn.Linear(emb_size, 1)
         self.alpha = alpha
@@ -79,6 +79,7 @@ class DurationPredictor(nn.Module):
 def length_regulation(inputs, durations):
     final_res = None
     batch, seq_len, emb_size = inputs.shape
+    true_len = round(durations.sum(-1).max().item())
     for i in range(batch):
         curr_element = None
         for j in range(seq_len):
@@ -89,6 +90,9 @@ def length_regulation(inputs, durations):
                 curr_element = curr_res
             else:
                 curr_element = torch.cat((curr_element, curr_res), dim=1)
+        if curr_element.shape[1] < true_len:
+            diff = true_len - curr_element.shape[1]
+            curr_element = torch.nn.functional.pad(curr_element, (0, 0, 0, diff))
         if final_res is None:
             final_res = curr_element
         else:
