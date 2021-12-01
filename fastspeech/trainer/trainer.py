@@ -159,10 +159,9 @@ class Trainer(BaseTrainer):
             duration = self.aligner(
                 batch["audio"], batch["audio_length"], batch["text"]
             ).to(self.device)
-            coeff = batch["audio_length"] / 256
+            coeff = (batch["audio_length"] / 256).to(self.device)
             duration = duration * coeff.repeat(duration.shape[-1],
-                                               1).transpose(0, 1).to(
-                self.device)
+                                               1).transpose(0, 1)
         batch["duration"] = duration
         if is_train:
             self.optimizer.zero_grad()
