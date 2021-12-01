@@ -246,11 +246,11 @@ class Trainer(BaseTrainer):
                                   size=(1,)).item()
         target_spec = target_spectrograms[log_index]
         image = PIL.Image.open(
-            plot_spectrogram_to_buf(target_spec.cpu().log()))
+            plot_spectrogram_to_buf(target_spec.detach().cpu().log()))
         self.writer.add_image("target spec", ToTensor()(image))
         output_spec = spectrogram_batch[log_index]
         image = PIL.Image.open(
-            plot_spectrogram_to_buf(output_spec.cpu().log()))
+            plot_spectrogram_to_buf(output_spec.detach().cpu().log()))
         self.writer.add_image("output spec", ToTensor()(image))
 
     @torch.no_grad()
