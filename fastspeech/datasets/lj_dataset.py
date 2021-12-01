@@ -1,13 +1,9 @@
 import logging
+
+import librosa
 import torchaudio
 import torch
-import numpy as np
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-
-from .GraphemeAligner import GraphemeAligner
 from fastspeech.utils import ROOT_PATH
-from ..collate_fn.collate import collate_fn
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +17,27 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
         self.config_parser = config_parser
         self._tokenizer = torchaudio.pipelines. \
             TACOTRON2_GRIFFINLIM_CHAR_LJSPEECH.get_text_processor()
-        self.durations = None
+        self.wave2spec = self.initialize_mel_spec()
+        # self.durations = None
         # self.durations = self.load_durations(data_dir, device, num_workers,
         #                                      config_parser)
+
+    def initialize_mel_spec(self):
+        sr = self.config_parser["preprocessing"]["sr"]
+        args = self.config_parser["preprocessing"]["spectrogram"]["args"]
+        mel_basis = librosa.filters.mel(
+            sr=sr,
+            n_fft=args["n_fft"],
+            n_mels=args["n_mels"],
+            fmin=args["f_min"],
+            fmax=args["f_max"]
+        ).T
+        wave2spec = self.config_parser.init_obj(
+            self.config_parser["preprocessing"]["spectrogram"],
+            torchaudio.transforms,
+        )
+        wave2spec.fb.copy_(torch.tensor(mel_basis))
+        return wave2spec
 
     # def load_durations(self, data_dir, device, num_workers, config_parser):
     #     durations_file = data_dir / "durations.npy"
@@ -57,9 +71,6 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
         waveform_length = torch.tensor([waveform.shape[-1]]).int()
 
         tokens, token_lengths = self._tokenizer(transcript)
-        duration = None
-        if self.durations is not None and index < len(self.durations):
-            duration = self.durations[index]
 
         return waveform, waveform_length, transcript, tokens, token_lengths, \
             audio_spec, sr
@@ -77,9 +88,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
     def get_spectogram(self, audio_tensor_wave: torch.Tensor):
         sr = self.config_parser["preprocessing"]["sr"]
         with torch.no_grad():
-            wave2spec = self.config_parser.init_obj(
-                self.config_parser["preprocessing"]["spectrogram"],
-                torchaudio.transforms,
-            )
-            audio_tensor_spec = wave2spec(audio_tensor_wave)
-        return audio_tensor_spec, sr
+            mel = self.wave2spec(audio_tensor_wave) \
+                .clamp_(min=1e-5) \
+                .log_()
+        return mel, sr
