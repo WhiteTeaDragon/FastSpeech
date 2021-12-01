@@ -28,7 +28,7 @@ class MultiHeadedAttention(nn.Module):
             q = self.queries[i](inputs)
             k = self.keys[i](inputs)
             v = self.values[i](inputs)
-            res = torch.matmul(q, k.t()) / math.sqrt(self.hidden_size)
+            res = torch.matmul(q, k.transpose(1, 2)) / math.sqrt(self.hidden_size)
             res = torch.matmul(torch.nn.functional.softmax(res, dim=1), v)
             if final_res is None:
                 final_res = res
@@ -131,7 +131,7 @@ class FastSpeechModel(BaseModel):
 
     def forward(self, text_encoded, duration=None, *args, **kwargs):
         inputs = self.embedding(text_encoded)
-        batch, seq_len = inputs.shape
+        batch, seq_len, emb_size = inputs.shape
         inputs = inputs + self.pos_enc[:seq_len]
         inputs = self.fft1(inputs)
         duration_prediction = self.duration_predictor(inputs)
@@ -140,7 +140,7 @@ class FastSpeechModel(BaseModel):
                                        torch.exp(duration_prediction))
         else:
             inputs = length_regulation(inputs, duration)
-        batch, seq_len = inputs.shape
+        batch, seq_len, emb_size = inputs.shape
         inputs = inputs + self.pos_enc[:seq_len]
         inputs = self.fft2(inputs)
         spectrogram = self.linear(inputs)
