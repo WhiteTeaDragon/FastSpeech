@@ -156,7 +156,7 @@ class FastSpeechModel(BaseModel):
                                                 max_len) < token_lengths.\
             unsqueeze(1)
         for i in range(len(self.fft1)):
-            inputs = self.fft1(inputs, mask)
+            inputs = self.fft1[i](inputs, mask)
         duration_prediction = self.duration_predictor(inputs)
         if duration is None:
             inputs, mask = length_regulation(inputs,
@@ -166,7 +166,7 @@ class FastSpeechModel(BaseModel):
         batch, seq_len, emb_size = inputs.shape
         inputs = inputs + self.pos_enc[:seq_len]
         for i in range(len(self.fft2)):
-            inputs = self.fft1(inputs, mask)
+            inputs = self.fft2[i](inputs, mask)
         spectrogram = self.linear(inputs)
         return {"output_melspec": spectrogram.transpose(1, 2),
                 "output_duration": duration_prediction}
