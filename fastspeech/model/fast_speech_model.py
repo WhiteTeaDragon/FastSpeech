@@ -30,7 +30,8 @@ class MultiHeadedAttention(nn.Module):
         q = self.reshape_into_heads(self.query(inputs), batch_size)
         k = self.reshape_into_heads(self.key(inputs), batch_size)
         v = self.reshape_into_heads(self.value(inputs), batch_size)
-        res = torch.matmul(q, k.transpose(1, 2)) / math.sqrt(self.hidden_size)
+        res = torch.matmul(q, k.transpose(-1, -2)) / math.sqrt(
+            self.hidden_size)
         if mask is not None:
             res += mask * 1e-9
         res = torch.matmul(torch.nn.functional.softmax(res, dim=1), v)
