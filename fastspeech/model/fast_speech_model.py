@@ -156,9 +156,9 @@ class FastSpeechModel(BaseModel):
         batch, seq_len, emb_size = inputs.shape
         inputs = inputs + self.pos_enc[:seq_len]
         max_len = token_lengths.max()
-        mask = 1 - (torch.arange(max_len).expand(len(token_lengths),
-                                                 max_len).to(device) <
-                    token_lengths.unsqueeze(1))
+        mask = ~(torch.arange(max_len).expand(len(token_lengths),
+                                              max_len).to(device) <
+                 token_lengths.unsqueeze(1))
         for i in range(len(self.fft1)):
             inputs = self.fft1[i](inputs, mask)
         duration_prediction = self.duration_predictor(inputs)
