@@ -27,7 +27,6 @@ def collate_fn(instances: List[Tuple]) -> Dict:
         duration = pad_sequence([
             duration_[0] for duration_ in duration
         ]).transpose(0, 1)
-        duration = torch.cat(duration)
 
     return {"audio": waveform, "audio_length": waveform_length,
             "text": transcript, "text_encoded": tokens,
