@@ -33,7 +33,9 @@ class MultiHeadedAttention(nn.Module):
         res = torch.matmul(q, k.transpose(-1, -2)) / math.sqrt(
             self.hidden_size)
         if mask is not None:
+            res = res.permute(1, 3, 0, 2)
             res += mask * 1e-9
+            res = res.permute(2, 0, 3, 1)
         res = torch.matmul(torch.nn.functional.softmax(res, dim=2), v)
         res = res.permute(0, 2, 1, 3).contiguous().view(batch_size, -1,
                                                         self.n_heads *
