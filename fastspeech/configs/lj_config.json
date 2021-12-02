@@ -28,6 +28,7 @@
         "kernel_size": 3,
         "fft_hidden_size": 1536,
         "dropout_p": 0.1,
+        "predictor_hidden_size": 256,
         "predictor_kernel_size": 3,
         "alpha": 1,
         "mels": 80

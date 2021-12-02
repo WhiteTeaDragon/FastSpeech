@@ -8,7 +8,7 @@ from fastspeech.base import BaseModel
 
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, n_heads, emb_size):
+    def __init__(self, n_heads, emb_size, dropout):
         super(MultiHeadedAttention, self).__init__()
         assert emb_size % n_heads == 0, f"Wrong number of heads {n_heads} " \
                                         f"for emb_size {emb_size}!"
@@ -18,6 +18,7 @@ class MultiHeadedAttention(nn.Module):
         self.key = nn.Linear(emb_size, emb_size)
         self.value = nn.Linear(emb_size, emb_size)
         self.w_final = nn.Linear(emb_size, emb_size)
+        self.dropout = nn.Dropout(dropout)
 
     def reshape_into_heads(self, out, batch_size):
         last_dim = self.hidden_size // self.n_heads
@@ -33,14 +34,14 @@ class MultiHeadedAttention(nn.Module):
         if mask is not None:
             res += mask * 1e-9
         res = torch.matmul(torch.nn.functional.softmax(res, dim=1), v)
-        return self.w_final(res)
+        return self.dropout(self.w_final(res))
 
 
 class FeedForwardTransformer(nn.Module):
     def __init__(self, n_heads, emb_size, hidden_size, kernel_size,
                  dropout_p):
         super(FeedForwardTransformer, self).__init__()
-        self.attention = MultiHeadedAttention(n_heads, emb_size)
+        self.attention = MultiHeadedAttention(n_heads, emb_size, dropout_p)
         self.norm1 = nn.LayerNorm(emb_size)
         self.conv = nn.Sequential(
             nn.Conv1d(emb_size, hidden_size, kernel_size, padding="same"),
@@ -106,8 +107,8 @@ def length_regulation(inputs, durations):
 
 class FastSpeechModel(BaseModel):
     def __init__(self, emb_size, max_len, num_blocks, n_heads, kernel_size,
-                 fft_hidden_size, dropout_p, predictor_kernel_size, mels,
-                 *args, **kwargs):
+                 fft_hidden_size, dropout_p, predictor_hidden_size,
+                 predictor_kernel_size, mels, *args, **kwargs):
         super().__init__(*args, **kwargs)
         vocab_size = len(torchaudio.pipelines.
                          TACOTRON2_GRIFFINLIM_CHAR_LJSPEECH.
@@ -128,7 +129,7 @@ class FastSpeechModel(BaseModel):
                                                  dropout_p))
         self.fft1 = nn.Sequential(*blocks)
         self.duration_predictor = DurationPredictor(emb_size,
-                                                    emb_size,
+                                                    predictor_hidden_size,
                                                     predictor_kernel_size)
         blocks = []
         for i in range(num_blocks):
