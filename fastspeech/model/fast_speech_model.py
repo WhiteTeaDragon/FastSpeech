@@ -66,11 +66,11 @@ class DurationPredictor(nn.Module):
         super(DurationPredictor, self).__init__()
         self.conv1 = nn.Conv1d(emb_size, hidden_size, kernel_size,
                                padding="same")
-        self.norm1 = nn.LayerNorm(emb_size)
-        self.conv2 = nn.Conv1d(hidden_size, emb_size, kernel_size,
+        self.norm1 = nn.LayerNorm(hidden_size)
+        self.conv2 = nn.Conv1d(hidden_size, hidden_size, kernel_size,
                                padding="same")
-        self.norm2 = nn.LayerNorm(emb_size)
-        self.linear = nn.Linear(emb_size, 1)
+        self.norm2 = nn.LayerNorm(hidden_size)
+        self.linear = nn.Linear(hidden_size, 1)
 
     def forward(self, inputs):
         inputs = self.norm1(self.conv1(inputs.transpose(1, 2)).transpose(1, 2))
