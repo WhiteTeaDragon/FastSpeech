@@ -92,7 +92,7 @@ def length_regulation(inputs, durations):
     final_res = None
     batch, seq_len, emb_size = inputs.shape
     true_len = round(durations.sum(-1).max().item())
-    mask = torch.zeros(batch, true_len, seq_len)
+    mask = torch.zeros(batch, true_len)
     for i in range(batch):
         curr_element = None
         for j in range(seq_len):
