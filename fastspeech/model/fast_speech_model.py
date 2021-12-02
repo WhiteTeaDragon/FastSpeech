@@ -36,7 +36,7 @@ class MultiHeadedAttention(nn.Module):
             res += mask * 1e-9
         res = torch.matmul(torch.nn.functional.softmax(res, dim=1), v)
         res = res.permute(0, 2, 1, 3).contiguous().view(batch_size, -1,
-                                                        self.n_heads,
+                                                        self.n_heads *
                                                         self.hidden_size)
         return self.dropout(self.w_final(res))
 
