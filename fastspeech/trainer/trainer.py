@@ -7,7 +7,6 @@ from torchvision.transforms import ToTensor
 from tqdm import tqdm
 
 from fastspeech.base import BaseTrainer
-from fastspeech.datasets.GraphemeAligner import GraphemeAligner
 from fastspeech.logger.utils import plot_spectrogram_to_buf
 from fastspeech.utils import inf_loop, MetricTracker
 from fastspeech.model import Vocoder
@@ -57,7 +56,6 @@ class Trainer(BaseTrainer):
         self.beam_search = beam_search
         self.log_step = 10
         self.vocoder = Vocoder().to(self.device)
-        self.aligner = GraphemeAligner().to(self.device)
 
         self.train_metrics = MetricTracker(
             "loss", "grad norm", "duration_loss", "melspec_loss",
@@ -155,14 +153,6 @@ class Trainer(BaseTrainer):
 
     def process_batch(self, batch, is_train: bool, metrics: MetricTracker):
         batch = self.move_batch_to_device(batch, self.device)
-        with torch.no_grad():
-            duration = self.aligner(
-                batch["audio"], batch["audio_length"], batch["text"]
-            ).to(self.device)
-            coeff = (batch["audio_length"] / 256).to(self.device)
-            duration = duration * coeff.repeat(duration.shape[-1],
-                                               1).transpose(0, 1)
-        batch["duration"] = duration
         if is_train:
             self.optimizer.zero_grad()
         outputs = self.model(**batch)

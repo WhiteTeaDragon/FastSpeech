@@ -2,6 +2,7 @@ import math
 
 from torch import nn
 import torch
+import torchaudio
 
 from fastspeech.base import BaseModel
 
@@ -9,31 +10,30 @@ from fastspeech.base import BaseModel
 class MultiHeadedAttention(nn.Module):
     def __init__(self, n_heads, emb_size):
         super(MultiHeadedAttention, self).__init__()
+        assert emb_size % n_heads == 0, f"Wrong number of heads {n_heads} " \
+                                        f"for emb_size {emb_size}!"
         self.n_heads = n_heads
         self.hidden_size = emb_size
-        self.queries, self.keys, self.values = [], [], []
-        for i in range(n_heads):
-            self.queries.append(nn.Linear(emb_size, emb_size))
-            self.keys.append(nn.Linear(emb_size, emb_size))
-            self.values.append(nn.Linear(emb_size, emb_size))
-        self.queries = nn.ModuleList(self.queries)
-        self.keys = nn.ModuleList(self.keys)
-        self.values = nn.ModuleList(self.values)
-        self.w_final = nn.Linear(emb_size * n_heads, emb_size)
+        self.query = nn.Linear(emb_size, emb_size)
+        self.key = nn.Linear(emb_size, emb_size)
+        self.value = nn.Linear(emb_size, emb_size)
+        self.w_final = nn.Linear(emb_size, emb_size)
 
-    def forward(self, inputs):
-        final_res = None
-        for i in range(self.n_heads):
-            q = self.queries[i](inputs)
-            k = self.keys[i](inputs)
-            v = self.values[i](inputs)
-            res = torch.matmul(q, k.transpose(1, 2)) / math.sqrt(self.hidden_size)
-            res = torch.matmul(torch.nn.functional.softmax(res, dim=1), v)
-            if final_res is None:
-                final_res = res
-            else:
-                final_res = torch.cat((final_res, res), dim=1)
-        return self.w_final(final_res)
+    def reshape_into_heads(self, out, batch_size):
+        last_dim = self.hidden_size // self.n_heads
+        out = out.reshape(batch_size, -1, self.n_heads, last_dim)
+        return torch.permute(out, (0, 2, 1, 3))
+
+    def forward(self, inputs, mask=None):
+        batch_size = inputs.shape[0]
+        q = self.reshape_into_heads(self.query(inputs), batch_size)
+        k = self.reshape_into_heads(self.key(inputs), batch_size)
+        v = self.reshape_into_heads(self.value(inputs), batch_size)
+        res = torch.matmul(q, k.transpose(1, 2)) / math.sqrt(self.hidden_size)
+        if mask is not None:
+            res += mask * 1e-9
+        res = torch.matmul(torch.nn.functional.softmax(res, dim=1), v)
+        return self.w_final(res)
 
 
 class FeedForwardTransformer(nn.Module):
@@ -50,8 +50,8 @@ class FeedForwardTransformer(nn.Module):
         )
         self.norm2 = nn.LayerNorm(emb_size)
 
-    def forward(self, inputs):
-        after_attention = self.attention(inputs)
+    def forward(self, inputs, mask):
+        after_attention = self.attention(inputs, mask)
         inputs = after_attention + inputs
         inputs = self.norm1(inputs)
         after_conv = self.conv(inputs.transpose(1, 2)).transpose(1, 2)
@@ -61,25 +61,27 @@ class FeedForwardTransformer(nn.Module):
 
 
 class DurationPredictor(nn.Module):
-    def __init__(self, emb_size, hidden_size, kernel_size, alpha):
+    def __init__(self, emb_size, hidden_size, kernel_size):
         super(DurationPredictor, self).__init__()
-        self.conv1 = nn.Conv1d(emb_size, hidden_size, kernel_size, padding="same")
+        self.conv1 = nn.Conv1d(emb_size, hidden_size, kernel_size,
+                               padding="same")
         self.norm1 = nn.LayerNorm(emb_size)
-        self.conv2 = nn.Conv1d(hidden_size, emb_size, kernel_size, padding="same")
+        self.conv2 = nn.Conv1d(hidden_size, emb_size, kernel_size,
+                               padding="same")
         self.norm2 = nn.LayerNorm(emb_size)
         self.linear = nn.Linear(emb_size, 1)
-        self.alpha = alpha
 
     def forward(self, inputs):
         inputs = self.norm1(self.conv1(inputs.transpose(1, 2)).transpose(1, 2))
         inputs = self.norm2(self.conv2(inputs.transpose(1, 2)).transpose(1, 2))
-        return self.linear(inputs) * self.alpha
+        return self.linear(inputs)
 
 
 def length_regulation(inputs, durations):
     final_res = None
     batch, seq_len, emb_size = inputs.shape
     true_len = round(durations.sum(-1).max().item())
+    mask = torch.zeros(batch, true_len, seq_len)
     for i in range(batch):
         curr_element = None
         for j in range(seq_len):
@@ -90,22 +92,26 @@ def length_regulation(inputs, durations):
                 curr_element = curr_res
             else:
                 curr_element = torch.cat((curr_element, curr_res), dim=1)
+        mask[i, curr_element.shape[1]:] = 1
         if curr_element.shape[1] < true_len:
             diff = true_len - curr_element.shape[1]
-            curr_element = torch.nn.functional.pad(curr_element, (0, 0, 0, diff))
+            curr_element = torch.nn.functional.pad(curr_element, (0, 0, 0,
+                                                                  diff))
         if final_res is None:
             final_res = curr_element
         else:
             final_res = torch.cat((final_res, curr_element))
-    return final_res
+    return final_res, mask
 
 
 class FastSpeechModel(BaseModel):
     def __init__(self, emb_size, max_len, num_blocks, n_heads, kernel_size,
-                 fft_hidden_size, dropout_p, predictor_kernel_size, alpha,
-                 mels, *args, **kwargs):
+                 fft_hidden_size, dropout_p, predictor_kernel_size, mels,
+                 *args, **kwargs):
         super().__init__(*args, **kwargs)
-        vocab_size = 40
+        vocab_size = len(torchaudio.pipelines.
+                         TACOTRON2_GRIFFINLIM_CHAR_LJSPEECH.
+                         get_text_processor().tokens)
         self.embedding = nn.Embedding(vocab_size, emb_size)
         w = torch.Tensor([(1 / 10000) ** (2 * i / emb_size) for i in
                           range(1, emb_size // 2 + 1)])
@@ -123,8 +129,7 @@ class FastSpeechModel(BaseModel):
         self.fft1 = nn.Sequential(*blocks)
         self.duration_predictor = DurationPredictor(emb_size,
                                                     emb_size,
-                                                    predictor_kernel_size,
-                                                    alpha)
+                                                    predictor_kernel_size)
         blocks = []
         for i in range(num_blocks):
             blocks.append(FeedForwardTransformer(n_heads, emb_size,
@@ -133,20 +138,25 @@ class FastSpeechModel(BaseModel):
         self.fft2 = nn.Sequential(*blocks)
         self.linear = nn.Linear(emb_size, mels)
 
-    def forward(self, text_encoded, duration=None, *args, **kwargs):
+    def forward(self, text_encoded, token_lengths, duration=None, alpha=1,
+                *args, **kwargs):
         inputs = self.embedding(text_encoded)
         batch, seq_len, emb_size = inputs.shape
         inputs = inputs + self.pos_enc[:seq_len]
-        inputs = self.fft1(inputs)
+        max_len = token_lengths.max()
+        mask = 1 - torch.arange(max_len).expand(len(token_lengths),
+                                                max_len) < token_lengths.\
+            unsqueeze(1)
+        inputs = self.fft1(inputs, mask)
         duration_prediction = self.duration_predictor(inputs)
         if duration is None:
-            inputs = length_regulation(inputs,
-                                       torch.exp(duration_prediction))
+            inputs, mask = length_regulation(inputs,
+                                             torch.exp(duration_prediction))
         else:
-            inputs = length_regulation(inputs, duration)
+            inputs, mask = length_regulation(inputs, duration * alpha)
         batch, seq_len, emb_size = inputs.shape
         inputs = inputs + self.pos_enc[:seq_len]
-        inputs = self.fft2(inputs)
+        inputs = self.fft2(inputs, mask)
         spectrogram = self.linear(inputs)
         return {"output_melspec": spectrogram.transpose(1, 2),
                 "output_duration": duration_prediction}
