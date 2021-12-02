@@ -15,8 +15,7 @@ def get_dataloaders(configs: ConfigParser, device):
         params = config_params[i][1]
         num_workers = params.get("num_workers", 1)
         dataset = configs.init_obj(params["datasets"][0], fastspeech.datasets,
-                                   device, num_workers, configs,
-                                   params[i][1]["datasets"]["args"])
+                                   device, num_workers, configs)
         assert "test_share" in params, "You must specify share of test " \
                                        "examples"
         train_dataset, test_dataset = dataset, dataset
