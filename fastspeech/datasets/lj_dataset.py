@@ -83,7 +83,6 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
                     durations = curr_durations
                 else:
                     durations = torch.cat((durations, curr_durations))
-                break
             np.save(durations_file, durations)
         return durations
 
