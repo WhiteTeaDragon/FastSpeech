@@ -155,6 +155,7 @@ class Trainer(BaseTrainer):
         batch = self.move_batch_to_device(batch, self.device)
         if is_train:
             self.optimizer.zero_grad()
+        batch["device"] = self.device
         outputs = self.model(**batch)
         batch.update(outputs)
         with torch.no_grad():
