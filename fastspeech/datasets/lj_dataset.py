@@ -96,7 +96,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
 
         duration = None
         if self.durations is not None:
-            duration = self.durations[index]
+            duration = self.durations[index].unsqueeze(0)
 
         return waveform, waveform_length, transcript, tokens, token_lengths, \
             audio_spec, sr, duration
