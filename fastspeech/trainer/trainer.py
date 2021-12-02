@@ -73,7 +73,7 @@ class Trainer(BaseTrainer):
         Move all necessary tensors to the HPU
         """
         for tensor_for_gpu in ["audio", "audio_length", "text_encoded",
-                               "token_lengths", "melspec"]:
+                               "token_lengths", "melspec", "duration"]:
             batch[tensor_for_gpu] = batch[tensor_for_gpu].to(device)
         return batch
 
