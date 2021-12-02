@@ -4,7 +4,6 @@
   "overfit_on_one_batch": "True",
   "preprocessing": {
     "sr": 22050,
-    "pad_value": -11.5129251,
     "spectrogram": {
       "type": "MelSpectrogram",
       "args": {
