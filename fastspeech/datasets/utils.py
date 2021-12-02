@@ -1,5 +1,4 @@
 from torch.utils.data import DataLoader
-import torch
 
 import fastspeech.datasets
 from fastspeech.collate_fn.collate import collate_fn
@@ -17,7 +16,7 @@ def get_dataloaders(configs: ConfigParser, device):
         num_workers = params.get("num_workers", 1)
         dataset = configs.init_obj(params["datasets"][0], fastspeech.datasets,
                                    device, num_workers, configs,
-                                   params["datasets"]["args"])
+                                   params[i][1]["datasets"]["args"])
         assert "test_share" in params, "You must specify share of test " \
                                        "examples"
         train_dataset, test_dataset = dataset, dataset
