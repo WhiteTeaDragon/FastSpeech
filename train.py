@@ -50,10 +50,11 @@ def main(config):
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = config.init_obj(config["optimizer"], torch.optim,
                                 trainable_params)
-    lr_scheduler = config.init_obj(config["lr_scheduler"],
-                                   torch.optim.lr_scheduler, optimizer)
     if config["lr_scheduler"]["use"] == "False":
         lr_scheduler = None
+    else:
+        lr_scheduler = config.init_obj(config["lr_scheduler"],
+                                       torch.optim.lr_scheduler, optimizer)
     scheduler_frequency_of_update = config["lr_scheduler"]["frequency"]
     do_beam_search = config["trainer"].get("beam_search", False)
     if do_beam_search == "True":
