@@ -68,7 +68,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
                     input = batch["text_encoded"][i]
                     length = batch["token_lengths"][i]
                     correct_text.append(''.join([self._tokenizer.tokens[j] for
-                                                 j in input[i, :length]]))
+                                                 j in input[:length]]))
                 with torch.no_grad():
                     curr_durations = aligner(
                         batch["audio"].to(device), batch["audio_length"],
