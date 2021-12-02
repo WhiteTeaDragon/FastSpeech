@@ -133,7 +133,7 @@ class FastSpeechModel(BaseModel):
             blocks.append(FeedForwardTransformer(n_heads, emb_size,
                                                  fft_hidden_size, kernel_size,
                                                  dropout_p))
-        self.fft1 = nn.ModuleList(*blocks)
+        self.fft1 = nn.ModuleList(blocks)
         self.duration_predictor = DurationPredictor(emb_size,
                                                     predictor_hidden_size,
                                                     predictor_kernel_size,
@@ -143,7 +143,7 @@ class FastSpeechModel(BaseModel):
             blocks.append(FeedForwardTransformer(n_heads, emb_size,
                                                  fft_hidden_size, kernel_size,
                                                  dropout_p))
-        self.fft2 = nn.ModuleList(*blocks)
+        self.fft2 = nn.ModuleList(blocks)
         self.linear = nn.Linear(emb_size, mels)
 
     def forward(self, text_encoded, token_lengths, duration=None, alpha=1,
