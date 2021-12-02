@@ -133,7 +133,7 @@ class FastSpeechModel(BaseModel):
             blocks.append(FeedForwardTransformer(n_heads, emb_size,
                                                  fft_hidden_size, kernel_size,
                                                  dropout_p))
-        self.fft1 = nn.Sequential(*blocks)
+        self.fft1 = nn.ModuleList(*blocks)
         self.duration_predictor = DurationPredictor(emb_size,
                                                     predictor_hidden_size,
                                                     predictor_kernel_size,
@@ -143,7 +143,7 @@ class FastSpeechModel(BaseModel):
             blocks.append(FeedForwardTransformer(n_heads, emb_size,
                                                  fft_hidden_size, kernel_size,
                                                  dropout_p))
-        self.fft2 = nn.Sequential(*blocks)
+        self.fft2 = nn.ModuleList(*blocks)
         self.linear = nn.Linear(emb_size, mels)
 
     def forward(self, text_encoded, token_lengths, duration=None, alpha=1,
@@ -155,7 +155,8 @@ class FastSpeechModel(BaseModel):
         mask = 1 - torch.arange(max_len).expand(len(token_lengths),
                                                 max_len) < token_lengths.\
             unsqueeze(1)
-        inputs = self.fft1(inputs, mask)
+        for i in range(len(self.fft1)):
+            inputs = self.fft1(inputs, mask)
         duration_prediction = self.duration_predictor(inputs)
         if duration is None:
             inputs, mask = length_regulation(inputs,
@@ -164,7 +165,8 @@ class FastSpeechModel(BaseModel):
             inputs, mask = length_regulation(inputs, duration * alpha)
         batch, seq_len, emb_size = inputs.shape
         inputs = inputs + self.pos_enc[:seq_len]
-        inputs = self.fft2(inputs, mask)
+        for i in range(len(self.fft2)):
+            inputs = self.fft1(inputs, mask)
         spectrogram = self.linear(inputs)
         return {"output_melspec": spectrogram.transpose(1, 2),
                 "output_duration": duration_prediction}
