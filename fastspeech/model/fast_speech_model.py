@@ -62,19 +62,25 @@ class FeedForwardTransformer(nn.Module):
 
 
 class DurationPredictor(nn.Module):
-    def __init__(self, emb_size, hidden_size, kernel_size):
+    def __init__(self, emb_size, hidden_size, kernel_size, dropout):
         super(DurationPredictor, self).__init__()
         self.conv1 = nn.Conv1d(emb_size, hidden_size, kernel_size,
                                padding="same")
         self.norm1 = nn.LayerNorm(hidden_size)
+        self.relu1 = nn.ReLU()
+        self.dropout1 = nn.Dropout(dropout)
         self.conv2 = nn.Conv1d(hidden_size, hidden_size, kernel_size,
                                padding="same")
         self.norm2 = nn.LayerNorm(hidden_size)
+        self.relu2 = nn.ReLU()
+        self.dropout2 = nn.Dropout(dropout)
         self.linear = nn.Linear(hidden_size, 1)
 
     def forward(self, inputs):
         inputs = self.norm1(self.conv1(inputs.transpose(1, 2)).transpose(1, 2))
+        inputs = self.dropout1(self.relu1(inputs))
         inputs = self.norm2(self.conv2(inputs.transpose(1, 2)).transpose(1, 2))
+        inputs = self.dropout2(self.relu2(inputs))
         return self.linear(inputs)
 
 
@@ -130,7 +136,8 @@ class FastSpeechModel(BaseModel):
         self.fft1 = nn.Sequential(*blocks)
         self.duration_predictor = DurationPredictor(emb_size,
                                                     predictor_hidden_size,
-                                                    predictor_kernel_size)
+                                                    predictor_kernel_size,
+                                                    dropout_p)
         blocks = []
         for i in range(num_blocks):
             blocks.append(FeedForwardTransformer(n_heads, emb_size,
