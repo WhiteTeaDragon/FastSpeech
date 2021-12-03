@@ -264,7 +264,8 @@ class Trainer(BaseTrainer):
         to_log_text = text[log_index]
         to_log_audio = output_audio[log_index]
         self.writer.add_text("text input", to_log_text)
-        self.writer.add_audio("audio output", to_log_audio)
+        self.writer.add_audio("audio output", to_log_audio,
+                              self.config["preprocessing"]["sr"])
 
     def _log_spectrogram(self, target_spectrograms, spectrogram_batch):
         log_index = torch.randint(low=0, high=len(target_spectrograms),
