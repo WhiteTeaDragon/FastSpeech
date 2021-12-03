@@ -286,7 +286,9 @@ class Trainer(BaseTrainer):
             curr_att = attention[i][log_index]
             for j in range(len(curr_att)):
                 head_att = curr_att[j]
-                image = PIL.Image.open(
-                    plot_attention_to_buf(head_att.detach().cpu()))
+                buffer = plot_attention_to_buf(head_att.detach().cpu())
+                image = PIL.Image.open(buffer)
                 self.writer.add_image(f"attention {i}, head {j}",
                                       ToTensor()(image))
+                buffer.close()
+                image.close()
