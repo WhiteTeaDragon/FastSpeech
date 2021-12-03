@@ -1,7 +1,9 @@
 import random
 
 import PIL
+import librosa
 import torch
+import torchaudio
 from torch.nn.utils import clip_grad_norm_
 from torchvision.transforms import ToTensor
 from tqdm import tqdm
@@ -67,6 +69,24 @@ class Trainer(BaseTrainer):
             "loss", "duration_loss", "melspec_loss",
             *[m.name for m in self.metrics], writer=self.writer
         )
+        self.wave2spec = self.initialize_mel_spec()
+
+    def initialize_mel_spec(self):
+        sr = self.config["preprocessing"]["sr"]
+        args = self.config["preprocessing"]["spectrogram"]["args"]
+        mel_basis = librosa.filters.mel(
+            sr=sr,
+            n_fft=args["n_fft"],
+            n_mels=args["n_mels"],
+            fmin=args["f_min"],
+            fmax=args["f_max"]
+        ).T
+        wave2spec = self.config.init_obj(
+            self.config["preprocessing"]["spectrogram"],
+            torchaudio.transforms,
+        )
+        wave2spec.mel_scale.fb.copy_(torch.tensor(mel_basis))
+        return wave2spec
 
     @staticmethod
     def move_batch_to_device(batch, device: torch.device):
@@ -153,7 +173,18 @@ class Trainer(BaseTrainer):
 
         return log
 
+    def get_spectogram(self, audio_tensor_wave: torch.Tensor):
+        sr = self.config["preprocessing"]["sr"]
+        with torch.no_grad():
+            mel = self.wave2spec(audio_tensor_wave) \
+                .clamp_(min=1e-5) \
+                .log_()
+        return mel, sr
+
     def process_batch(self, batch, is_train: bool, metrics: MetricTracker):
+        audio_spec, sr = self.get_spectogram(batch["audio"])
+        batch["melspec"] = audio_spec
+        batch["sample_rate"] = sr
         batch = self.move_batch_to_device(batch, self.device)
         if is_train:
             self.optimizer.zero_grad()
@@ -288,7 +319,7 @@ class Trainer(BaseTrainer):
                 head_att = curr_att[j]
                 buffer = plot_attention_to_buf(head_att.detach().cpu())
                 image = PIL.Image.open(buffer)
-                self.writer.add_image(f"attention {i}, head {j}",
+                self.writer.add_image(f"attention {i}, head {j}, {part}",
                                       ToTensor()(image))
                 buffer.close()
                 image.close()
