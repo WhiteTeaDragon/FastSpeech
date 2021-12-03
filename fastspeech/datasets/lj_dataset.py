@@ -11,6 +11,7 @@ from speechbrain.utils.data_utils import download_file
 
 from fastspeech.collate_fn.collate import collate_fn
 from fastspeech.datasets.GraphemeAligner import GraphemeAligner
+from fastspeech.datasets.utils import expand_abbreviations
 from fastspeech.utils import ROOT_PATH
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,8 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
             TACOTRON2_GRIFFINLIM_CHAR_LJSPEECH.get_text_processor()
         self.wave2spec = self.initialize_mel_spec()
         self.durations = None
-        if durations_from_outside == "True":
+        self.durations_from_outside = (durations_from_outside == "True")
+        if self.durations_from_outside:
             self.durations = load_durations_from_outside(data_dir)
         else:
             self.durations = self.load_durations(device, num_workers,
@@ -113,6 +115,8 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
         waveform_length = torch.tensor([waveform.shape[-1]]).int()
         audio_spec_length = torch.tensor([audio_spec.shape[-1]]).int()
 
+        if self.durations_from_outside:
+            transcript = expand_abbreviations(transcript)
         tokens, token_lengths = self._tokenizer(transcript)
 
         duration = None

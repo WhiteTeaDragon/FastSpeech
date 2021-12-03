@@ -1,7 +1,7 @@
 {
   "name": "lj_config",
   "n_gpu": 1,
-  "overfit_on_one_batch": "True",
+  "overfit_on_one_batch": "False",
   "preprocessing": {
     "sr": 22050,
     "spectrogram": {
@@ -35,7 +35,7 @@
   },
   "data": {
     "all": {
-      "batch_size": 2,
+      "batch_size": 4,
       "num_workers": 5,
       "test_share": 0.2,
       "datasets": [
@@ -43,7 +43,7 @@
           "type": "LJSpeechDataset",
           "args": {
             "download": "False",
-            "aligner_bs": 2,
+            "aligner_bs": 32,
             "durations_from_outside": "False",
             "data_dir": "/home/jupyter/mnt/s3/bucket-hse-rw/data/datasets"
           }
