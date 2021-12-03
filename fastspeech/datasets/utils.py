@@ -20,8 +20,7 @@ def get_dataloaders(configs: ConfigParser, device):
         num_workers = params.get("num_workers", 1)
         dataset = configs.init_obj(params["datasets"][0], fastspeech.datasets,
                                    device, num_workers, configs)
-        assert "test_share" in params, "You must specify share of test " \
-                                       "examples"
+        assert "test_size" in params, "You must specify size of valid!"
         test_size = int(params["test_size"])
         train_size = len(dataset) - test_size
         train_dataset, test_dataset = torch.utils.data.random_split(
