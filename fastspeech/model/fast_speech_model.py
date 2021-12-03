@@ -95,7 +95,7 @@ def length_regulation(inputs, durations, device):
     batch, seq_len, emb_size = inputs.shape
     true_lens = durations.sum(-1)
     true_len = round(true_lens.max().item())
-    mask = torch.zeros(batch, true_len, device=device)
+    mask = torch.zeros(batch, true_len, device=device, dtype=bool)
     for i in range(batch):
         curr_element = None
         for j in range(seq_len):
@@ -106,7 +106,7 @@ def length_regulation(inputs, durations, device):
                 curr_element = curr_res
             else:
                 curr_element = torch.cat((curr_element, curr_res), dim=1)
-        mask[i, round(true_lens[i].item()):] = 1
+        mask[i, round(true_lens[i].item()):] = True
         if curr_element.shape[1] < true_len:
             diff = true_len - curr_element.shape[1]
             curr_element = torch.nn.functional.pad(curr_element, (0, 0, 0,
