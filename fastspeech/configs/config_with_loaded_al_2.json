@@ -68,7 +68,7 @@
     "args": {}
   },
   "trainer": {
-    "epochs": 35,
+    "epochs": 40,
     "save_dir": "saved/",
     "save_period": 5,
     "verbosity": 2,
