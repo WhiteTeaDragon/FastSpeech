@@ -90,24 +90,16 @@ class DurationPredictor(nn.Module):
         return self.linear(inputs)
 
 
-def my_round(tensor):
-    diff = tensor - torch.floor(tensor)
-    mask = diff > 0.3
-    res = torch.floor(tensor)
-    res[mask] += 1
-    return res
-
-
 def length_regulation(inputs, durations, device):
     final_res = None
     batch, seq_len, emb_size = inputs.shape
-    true_len = my_round(durations).sum(-1).max().item()
+    true_len = round(durations.sum(-1).max().item())
     mask = torch.zeros(batch, true_len, device=device)
     for i in range(batch):
         curr_element = None
         for j in range(seq_len):
             curr_res = inputs[i, j].repeat(1,
-                                           my_round(durations[i, j]).int().
+                                           torch.round(durations[i, j]).int().
                                            item(), 1)
             if curr_element is None:
                 curr_element = curr_res
