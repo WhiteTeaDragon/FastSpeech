@@ -16,9 +16,9 @@ class FastSpeechLoss(torch.nn.Module):
         mask = ~kwargs["output_mask"].detach()
         output_term = (kwargs["output_melspec"][..., :slice_until].transpose(0,
                                                                              1)
-                       * mask).transpose(0, 1)
+                       * mask[..., :slice_until]).transpose(0, 1)
         true_term = (kwargs["melspec"][..., :slice_until].transpose(0, 1) *
-                     mask).transpose(0, 1)
+                     mask[..., :slice_until]).transpose(0, 1)
         melspec_loss = torch.nn.functional.mse_loss(output_term, true_term)
         return {"loss": duration_loss + melspec_loss,
                 "duration_loss": duration_loss, "melspec_loss": melspec_loss}

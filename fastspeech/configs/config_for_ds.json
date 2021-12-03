@@ -35,7 +35,7 @@
   },
   "data": {
     "all": {
-      "batch_size": 4,
+      "batch_size": 32,
       "num_workers": 5,
       "test_share": 0.2,
       "datasets": [
@@ -75,6 +75,7 @@
     "save_period": 50,
     "verbosity": 2,
     "monitor": "min val_loss",
+    "len_epoch": 1,
     "early_stop": 100,
     "wandb_project": "fastspeech",
     "grad_norm_clip": 2,
