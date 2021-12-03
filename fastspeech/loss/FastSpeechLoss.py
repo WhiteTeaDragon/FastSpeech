@@ -16,10 +16,7 @@ class FastSpeechLoss(torch.nn.Module):
                                                      log_duration)
         slice_until = min(kwargs["output_melspec"].shape[-1],
                           kwargs["melspec"].shape[-1])
-        melspec_lengths = kwargs["melspec_lengths"]
-        melspec_lengths = torch.minimum(melspec_lengths, torch.tensor(
-            slice_until))
-        mask = ~build_mask(melspec_lengths).to(kwargs["device"])
+        mask = ~kwargs["output_mask"].detach()
         output_term = (kwargs["output_melspec"][..., :slice_until].transpose(0,
                                                                              1)
                        * mask).transpose(0, 1)
