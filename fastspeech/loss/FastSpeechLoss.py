@@ -1,17 +1,15 @@
 import torch
 
-from fastspeech.collate_fn.collate import build_mask
-
 
 class FastSpeechLoss(torch.nn.Module):
     def __init__(self):
         super().__init__()
 
     def forward(self, *args, **kwargs) -> dict:
-        slice_until = min(kwargs["output_duration"].shape[-2],
+        slice_until = min(kwargs["output_duration"].shape[-1],
                           kwargs["duration"].shape[-1])
         duration_loss = torch.nn.functional.mse_loss(torch.exp(
-            kwargs["output_duration"].squeeze(-1)[..., :slice_until]),
+            kwargs["output_duration"][..., :slice_until]),
             kwargs["duration"][..., :slice_until].float())
         slice_until = min(kwargs["output_melspec"].shape[-1],
                           kwargs["melspec"].shape[-1])

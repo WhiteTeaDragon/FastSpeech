@@ -88,7 +88,7 @@ class DurationPredictor(nn.Module):
         inputs = self.dropout1(self.relu1(inputs))
         inputs = self.norm2(self.conv2(inputs.transpose(1, 2)).transpose(1, 2))
         inputs = self.dropout2(self.relu2(inputs))
-        return self.linear(inputs)
+        return self.linear(inputs).squeeze(-1)
 
 
 def length_regulation(inputs, durations, device):
