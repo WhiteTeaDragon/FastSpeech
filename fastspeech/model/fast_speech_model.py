@@ -91,32 +91,21 @@ class DurationPredictor(nn.Module):
 
 
 def length_regulation(inputs, durations, device):
-    final_res = None
     batch, seq_len, emb_size = inputs.shape
     true_lens = durations.sum(-1)
     true_len = round(true_lens.max().item())
     mask = torch.zeros(batch, true_len, device=device, dtype=bool)
+    final_res = torch.zeros(batch, true_len, emb_size, device=device)
     for i in range(batch):
-        curr_element = None
+        index = 0
         for j in range(seq_len):
             try:
                 curr_len = torch.round(durations[i, j]).int().item()
             except:
                 curr_len = durations[i, j].item()
-            curr_res = inputs[i, j].repeat(1, curr_len, 1)
-            if curr_element is None:
-                curr_element = curr_res
-            else:
-                curr_element = torch.cat((curr_element, curr_res), dim=1)
+            final_res[i, index:index + curr_len] = inputs[i, j]
+            index += curr_len
         mask[i, round(true_lens[i].item()):] = True
-        if curr_element.shape[1] < true_len:
-            diff = true_len - curr_element.shape[1]
-            curr_element = torch.nn.functional.pad(curr_element, (0, 0, 0,
-                                                                  diff))
-        if final_res is None:
-            final_res = curr_element
-        else:
-            final_res = torch.cat((final_res, curr_element))
     return final_res, mask
 
 
