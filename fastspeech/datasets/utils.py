@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 import fastspeech.datasets
 from fastspeech.collate_fn.collate import collate_fn
 from fastspeech.utils.parse_config import ConfigParser
+from unidecode import unidecode
 
 
 def get_dataloaders(configs: ConfigParser, device):
@@ -66,5 +67,5 @@ _abbreviations = [(re.compile('\\b%s\\.' % x[0], re.IGNORECASE), x[1]) for x in
 
 def expand_abbreviations(text):
     for regex, replacement in _abbreviations:
-        text = re.sub(regex, replacement, text)
+        text = re.sub(regex, replacement, unidecode(text))
     return text

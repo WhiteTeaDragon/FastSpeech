@@ -104,7 +104,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
                     curr_durations *= coeff.repeat(curr_durations.shape[-1],
                                                    1).transpose(0, 1)
                 durations.append(curr_durations)
-            durations = torch.cat(pad_sequence(durations)).transpose(0, 1)
+            durations = torch.cat(pad_sequence(durations, batch_first=True))
             np.save(durations_file, durations)
         return durations
 
