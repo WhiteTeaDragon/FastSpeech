@@ -23,7 +23,7 @@
         "emb_size": 384,
         "max_len": 5000,
         "num_blocks": 6,
-        "n_heads": 1,
+        "n_heads": 2,
         "kernel_size": 3,
         "fft_hidden_size": 1536,
         "dropout_p": 0.1,
@@ -35,7 +35,7 @@
   },
   "data": {
     "all": {
-      "batch_size": 4,
+      "batch_size": 32,
       "num_workers": 5,
       "test_share": 0.2,
       "datasets": [
