@@ -37,7 +37,7 @@
     "all": {
       "batch_size": 32,
       "num_workers": 5,
-      "test_share": 0.2,
+      "test_size": 32,
       "datasets": [
         {
           "type": "LJSpeechDataset",
@@ -68,11 +68,12 @@
     "args": {}
   },
   "trainer": {
-    "epochs": 150,
+    "epochs": 9,
     "save_dir": "saved/",
     "save_period": 5,
     "verbosity": 2,
     "monitor": "min val_loss",
+    "log_step": 100,
     "early_stop": 100,
     "wandb_project": "fastspeech",
     "grad_norm_clip": 2,

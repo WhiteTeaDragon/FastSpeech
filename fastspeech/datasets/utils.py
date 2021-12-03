@@ -1,5 +1,6 @@
 import re
 
+import torch
 from torch.utils.data import DataLoader
 
 import fastspeech.datasets
@@ -21,7 +22,10 @@ def get_dataloaders(configs: ConfigParser, device):
                                    device, num_workers, configs)
         assert "test_share" in params, "You must specify share of test " \
                                        "examples"
-        train_dataset, test_dataset = dataset, dataset
+        test_size = int(params["test_size"])
+        train_size = len(dataset) - test_size
+        train_dataset, test_dataset = torch.utils.data.random_split(
+            dataset, [train_size, test_size])
         # select batch size or batch sampler
         assert "batch_size" in params,\
             "You must provide batch_size for each split"

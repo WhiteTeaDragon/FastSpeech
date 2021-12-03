@@ -34,6 +34,7 @@ class Trainer(BaseTrainer):
             config,
             device,
             data_loader,
+            log_step,
             valid_data_loader=None,
             lr_scheduler=None,
             len_epoch=None,
@@ -57,7 +58,6 @@ class Trainer(BaseTrainer):
         self.lr_scheduler = lr_scheduler
         self.scheduler_frequency_of_update = scheduler_frequency_of_update
         self.beam_search = beam_search
-        self.log_step = 10
         self.vocoder = Vocoder().to(self.device)
 
         self.train_metrics = MetricTracker(
@@ -145,8 +145,7 @@ class Trainer(BaseTrainer):
                 self.writer.add_scalar(
                     "learning rate", get_lr(self.optimizer)
                 )
-                # self._log_one_prediction(batch["text"], batch[
-                # "output_audio"])
+                self._log_one_prediction(batch["text"], batch)
                 self._log_spectrogram(batch["melspec"],
                                       batch["output_melspec"])
                 self._log_scalars(self.train_metrics)
@@ -228,18 +227,9 @@ class Trainer(BaseTrainer):
                     is_train=False,
                     metrics=self.valid_metrics,
                 )
-            with torch.no_grad():
-                self.vocoder.eval()
-                batch["output_audio"] = []
-                for i in range(len(batch["output_melspec"])):
-                    batch["output_audio"].append(self.vocoder.inference(
-                        (batch["output_melspec"][i].transpose(0, 1)[~batch[
-                            "output_mask"][i].detach()]).transpose(0, 1).
-                        unsqueeze(0)
-                    ))
             self.writer.set_step(epoch * self.len_epoch, "valid")
             self._log_scalars(self.valid_metrics)
-            self._log_one_prediction(batch["text"], batch["output_audio"])
+            self._log_one_prediction(batch["text"], batch)
             self._log_spectrogram(batch["melspec"], batch["output_melspec"])
             self._log_audio(batch["audio"], part="val")
             self._log_attention(batch["attention"], part="val")
@@ -259,12 +249,18 @@ class Trainer(BaseTrainer):
             total = self.len_epoch
         return base.format(current, total, 100.0 * current / total)
 
-    def _log_one_prediction(self, text, output_audio):
+    def _log_one_prediction(self, text, batch):
         if self.writer is None:
             return
         log_index = torch.randint(low=0, high=len(text), size=(1,)).item()
         to_log_text = text[log_index]
-        to_log_audio = output_audio[log_index]
+        with torch.no_grad():
+            self.vocoder.eval()
+            to_log_audio = self.vocoder.inference(
+                (batch["output_melspec"][log_index].transpose(0, 1)[~batch[
+                    "output_mask"][log_index].detach()]).transpose(0, 1).
+                    unsqueeze(0)
+            )
         self.writer.add_text("text input", to_log_text)
         self.writer.add_audio("audio output", to_log_audio,
                               self.config["preprocessing"]["sr"])
