@@ -145,7 +145,8 @@ class Trainer(BaseTrainer):
                 self.writer.add_scalar(
                     "learning rate", get_lr(self.optimizer)
                 )
-                self._log_one_prediction(batch["text"], batch["output_audio"])
+                # self._log_one_prediction(batch["text"], batch[
+                # "output_audio"])
                 self._log_spectrogram(batch["melspec"],
                                       batch["output_melspec"])
                 self._log_scalars(self.train_metrics)
@@ -189,14 +190,6 @@ class Trainer(BaseTrainer):
         batch["device"] = self.device
         outputs = self.model(**batch)
         batch.update(outputs)
-        with torch.no_grad():
-            self.vocoder.eval()
-            batch["output_audio"] = []
-            for i in range(len(batch["output_melspec"])):
-                batch["output_audio"].append(self.vocoder.inference(
-                (batch["output_melspec"][i].transpose(0, 1)[~batch[
-                    "output_mask"][i].detach()]).transpose(0, 1).unsqueeze(0)
-                ))
         loss_dict = self.criterion(**batch)
         batch["loss"] = loss_dict["loss"]
         if is_train:
@@ -235,6 +228,15 @@ class Trainer(BaseTrainer):
                     is_train=False,
                     metrics=self.valid_metrics,
                 )
+            with torch.no_grad():
+                self.vocoder.eval()
+                batch["output_audio"] = []
+                for i in range(len(batch["output_melspec"])):
+                    batch["output_audio"].append(self.vocoder.inference(
+                        (batch["output_melspec"][i].transpose(0, 1)[~batch[
+                            "output_mask"][i].detach()]).transpose(0, 1).
+                        unsqueeze(0)
+                    ))
             self.writer.set_step(epoch * self.len_epoch, "valid")
             self._log_scalars(self.valid_metrics)
             self._log_one_prediction(batch["text"], batch["output_audio"])
