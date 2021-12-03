@@ -164,7 +164,7 @@ class Trainer(BaseTrainer):
             for i in range(len(batch["output_melspec"])):
                 batch["output_audio"].append(self.vocoder.inference(
                 (batch["output_melspec"][i].transpose(0, 1)[~batch[
-                    "output_mask"][i].detach()]).transpose(0, 1)
+                    "output_mask"][i].detach()]).transpose(0, 1).unsqueeze(0)
                 ))
         loss_dict = self.criterion(**batch)
         batch["loss"] = loss_dict["loss"]
