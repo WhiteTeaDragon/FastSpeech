@@ -46,6 +46,7 @@ class Trainer(BaseTrainer):
         self.skip_oom = skip_oom
         self.config = config
         self.data_loader = data_loader
+        self.log_step = log_step
         if len_epoch is None:
             # epoch-based training
             self.len_epoch = len(self.data_loader)
