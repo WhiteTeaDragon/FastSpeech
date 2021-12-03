@@ -45,7 +45,7 @@
             "download": "False",
             "aligner_bs": 2,
             "durations_from_outside": "False",
-            "data_dir": "/home/jupyter/mnt/s3/bucket-hse-rw/data/datasets/LJSpeech-1.1"
+            "data_dir": "/home/jupyter/mnt/s3/bucket-hse-rw/data/datasets"
           }
         }
       ]
