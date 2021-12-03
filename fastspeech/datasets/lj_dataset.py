@@ -48,7 +48,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
         if durations_from_outside == "True":
             self.durations = load_durations_from_outside(data_dir)
         else:
-            self.durations = self.load_durations(data_dir, device, num_workers,
+            self.durations = self.load_durations(device, num_workers,
                                                  config_parser, aligner_bs)
 
     def initialize_mel_spec(self):
