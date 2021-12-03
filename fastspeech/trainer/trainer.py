@@ -7,7 +7,8 @@ from torchvision.transforms import ToTensor
 from tqdm import tqdm
 
 from fastspeech.base import BaseTrainer
-from fastspeech.logger.utils import plot_spectrogram_to_buf
+from fastspeech.logger.utils import plot_spectrogram_to_buf, \
+    plot_attention_to_buf
 from fastspeech.utils import inf_loop, MetricTracker
 from fastspeech.model import Vocoder
 
@@ -130,6 +131,7 @@ class Trainer(BaseTrainer):
                                       batch["output_melspec"])
                 self._log_scalars(self.train_metrics)
                 self._log_audio(batch["audio"], batch["sample_rate"], "train")
+                self._log_attention(batch["attention"], part="train")
             if batch_idx >= self.len_epoch:
                 break
 
@@ -210,6 +212,7 @@ class Trainer(BaseTrainer):
                                      batch["sample_rate"])
             self._log_spectrogram(batch["melspec"], batch["output_melspec"])
             self._log_audio(batch["audio"], batch["sample_rate"], part="val")
+            self._log_attention(batch["attention"], part="val")
 
         # add histogram of model parameters to the tensorboard
         for name, p in self.model.named_parameters():
@@ -275,3 +278,12 @@ class Trainer(BaseTrainer):
         audio = audio_batch[index]
         sample_rate = sample_rates[index]
         self.writer.add_audio("audio target" + part, audio, sample_rate)
+
+    def _log_attention(self, attention, part):
+        log_index = torch.randint(low=0, high=len(attention[0]),
+                                  size=(1,)).item()
+        for i in range(len(attention)):
+            curr_att = attention[i][log_index]
+            image = PIL.Image.open(
+                plot_attention_to_buf(curr_att.detach().cpu()))
+            self.writer.add_image(f"attention {i}", ToTensor()(image))

@@ -57,11 +57,15 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
             download_file("https://github.com/xcmyz/FastSpeech/raw/master"
                           "/alignments.zip", zip_alignments_file)
         shutil.unpack_archive(zip_alignments_file, data_dir)
-        durations = []
+        durations = {}
         for fpath in (data_dir / "alignments").iterdir():
-            filename = str(data_dir / fpath.name)
-            durations.append(np.load(filename).unsqueeze(0))
-        return durations
+            filename = str(data_dir / "alignments" / fpath.name)
+            index = int(fpath.name[:-4])
+            durations[index] = torch.from_numpy(np.load(filename))
+        res = []
+        for i in range(len(durations)):
+            res.append(durations[i])
+        return res
 
     def load_durations(self, data_dir, device, num_workers, config_parser,
                        aligner_bs):

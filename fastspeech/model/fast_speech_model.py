@@ -36,11 +36,12 @@ class MultiHeadedAttention(nn.Module):
             res = res.permute(1, 3, 0, 2)
             res += mask * 1e-9
             res = res.permute(2, 0, 3, 1)
-        res = torch.matmul(torch.nn.functional.softmax(res, dim=2), v)
+        att = torch.nn.functional.softmax(res, dim=2)
+        res = torch.matmul(att, v)
         res = res.permute(0, 2, 1, 3).contiguous().view(batch_size, -1,
                                                         self.n_heads *
                                                         self.hidden_size)
-        return self.dropout(self.w_final(res))
+        return self.dropout(self.w_final(res)), att
 
 
 class FeedForwardTransformer(nn.Module):
@@ -58,13 +59,13 @@ class FeedForwardTransformer(nn.Module):
         self.norm2 = nn.LayerNorm(emb_size)
 
     def forward(self, inputs, mask):
-        after_attention = self.attention(inputs, mask)
+        after_attention, att = self.attention(inputs, mask)
         inputs = after_attention + inputs
         inputs = self.norm1(inputs)
         after_conv = self.conv(inputs.transpose(1, 2)).transpose(1, 2)
         inputs = after_conv + inputs
         inputs = self.norm2(inputs)
-        return inputs
+        return inputs, att
 
 
 class DurationPredictor(nn.Module):
@@ -99,9 +100,11 @@ def length_regulation(inputs, durations, device):
     for i in range(batch):
         curr_element = None
         for j in range(seq_len):
-            curr_res = inputs[i, j].repeat(1,
-                                           torch.round(durations[i, j]).int().
-                                           item(), 1)
+            try:
+                curr_len = torch.round(durations[i, j]).int().item()
+            except:
+                curr_len = durations[i, j].item()
+            curr_res = inputs[i, j].repeat(1, curr_len, 1)
             if curr_element is None:
                 curr_element = curr_res
             else:
@@ -158,8 +161,10 @@ class FastSpeechModel(BaseModel):
         inputs = self.embedding(text_encoded)
         batch, seq_len, emb_size = inputs.shape
         inputs = inputs + self.pos_enc[:seq_len]
+        attention = []
         for i in range(len(self.fft1)):
-            inputs = self.fft1[i](inputs, mask)
+            inputs, att = self.fft1[i](inputs, mask)
+            attention.append(att)
         duration_prediction = self.duration_predictor(inputs)
         if duration is None:
             inputs, mask = length_regulation(inputs,
@@ -171,8 +176,9 @@ class FastSpeechModel(BaseModel):
         batch, seq_len, emb_size = inputs.shape
         inputs = inputs + self.pos_enc[:seq_len]
         for i in range(len(self.fft2)):
-            inputs = self.fft2[i](inputs, mask)
+            inputs, att = self.fft2[i](inputs, mask)
+            attention.append(att)
         spectrogram = self.linear(inputs)
         return {"output_melspec": spectrogram.transpose(1, 2),
                 "output_duration": duration_prediction,
-                "output_mask": mask}
+                "output_mask": mask, "attention": attention}
