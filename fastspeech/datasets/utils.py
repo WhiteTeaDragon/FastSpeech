@@ -65,7 +65,11 @@ _abbreviations = [(re.compile('\\b%s\\.' % x[0], re.IGNORECASE), x[1]) for x in
 ]]
 
 
+def collapse_whitespace(text):
+    return re.sub(re.compile(r'\s+'), ' ', text)
+
+
 def expand_abbreviations(text):
     for regex, replacement in _abbreviations:
         text = re.sub(regex, replacement, unidecode(text))
-    return text
+    return collapse_whitespace(text)
