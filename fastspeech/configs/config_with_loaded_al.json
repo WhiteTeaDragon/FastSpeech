@@ -1,7 +1,7 @@
 {
   "name": "lj_config",
   "n_gpu": 1,
-  "overfit_on_one_batch": "True",
+  "overfit_on_one_batch": "False",
   "preprocessing": {
     "sr": 22050,
     "spectrogram": {
@@ -75,7 +75,6 @@
     "monitor": "min val_loss",
     "early_stop": 100,
     "wandb_project": "fastspeech",
-    "len_epoch": 1,
     "grad_norm_clip": 2,
     "beam_search": "False"
   }

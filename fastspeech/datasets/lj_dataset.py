@@ -16,6 +16,23 @@ from fastspeech.utils import ROOT_PATH
 logger = logging.getLogger(__name__)
 
 
+def load_durations_from_outside(data_dir):
+    zip_alignments_file = data_dir / "alignments.zip"
+    if not zip_alignments_file.exists():
+        download_file("https://github.com/xcmyz/FastSpeech/raw/master"
+                      "/alignments.zip", zip_alignments_file)
+    shutil.unpack_archive(zip_alignments_file, data_dir)
+    durations = {}
+    for fpath in (data_dir / "alignments").iterdir():
+        filename = str(data_dir / "alignments" / fpath.name)
+        index = int(fpath.name[:-4])
+        durations[index] = torch.from_numpy(np.load(filename))
+    res = []
+    for i in range(len(durations)):
+        res.append(durations[i])
+    return res
+
+
 class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
     def __init__(self, device, num_workers, config_parser, aligner_bs,
                  durations_from_outside, data_dir=None, download="True"):
@@ -29,7 +46,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
         self.wave2spec = self.initialize_mel_spec()
         self.durations = None
         if durations_from_outside == "True":
-            self.durations = self.load_durations_from_outside(data_dir)
+            self.durations = load_durations_from_outside(data_dir)
         else:
             self.durations = self.load_durations(data_dir, device, num_workers,
                                                  config_parser, aligner_bs)
@@ -51,28 +68,13 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
         wave2spec.mel_scale.fb.copy_(torch.tensor(mel_basis))
         return wave2spec
 
-    def load_durations_from_outside(self, data_dir):
-        zip_alignments_file = data_dir / "alignments.zip"
-        if not zip_alignments_file.exists():
-            download_file("https://github.com/xcmyz/FastSpeech/raw/master"
-                          "/alignments.zip", zip_alignments_file)
-        shutil.unpack_archive(zip_alignments_file, data_dir)
-        durations = {}
-        for fpath in (data_dir / "alignments").iterdir():
-            filename = str(data_dir / "alignments" / fpath.name)
-            index = int(fpath.name[:-4])
-            durations[index] = torch.from_numpy(np.load(filename))
-        res = []
-        for i in range(len(durations)):
-            res.append(durations[i])
-        return res
-
-    def load_durations(self, data_dir, device, num_workers, config_parser,
-                       aligner_bs):
-        durations_file = data_dir / "durations.npy"
+    def load_durations(self, device, num_workers, config_parser, aligner_bs):
+        durations_dir = ROOT_PATH / "data" / "datasets" / "lj"
+        durations_file = durations_dir / "durations.npy"
         if durations_file.exists():
             durations = torch.from_numpy(np.load(durations_file))
         else:
+            durations_dir.mkdir(exist_ok=True, parents=True)
             aligner = GraphemeAligner(config_parser).to(device)
             dataloader = DataLoader(self, batch_size=aligner_bs,
                                     collate_fn=collate_fn, shuffle=False,
