@@ -18,11 +18,11 @@ logger = logging.getLogger(__name__)
 
 class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
     def __init__(self, device, num_workers, config_parser, aligner_bs,
-                 durations_from_outside, data_dir=None):
+                 durations_from_outside, data_dir=None, download="True"):
         if data_dir is None:
             data_dir = ROOT_PATH / "data" / "datasets" / "lj"
             data_dir.mkdir(exist_ok=True, parents=True)
-        super().__init__(root=data_dir, download=True)
+        super().__init__(root=data_dir, download=(download == "True"))
         self.config_parser = config_parser
         self._tokenizer = torchaudio.pipelines. \
             TACOTRON2_GRIFFINLIM_CHAR_LJSPEECH.get_text_processor()
