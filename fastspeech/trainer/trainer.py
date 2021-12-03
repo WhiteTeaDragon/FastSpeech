@@ -160,9 +160,11 @@ class Trainer(BaseTrainer):
         batch.update(outputs)
         with torch.no_grad():
             self.vocoder.eval()
-            batch["output_audio"] = self.vocoder.inference(
-                (batch["output_melspec"].transpose(0, 1) *
-                (~batch["output_mask"].detach())).transpose(0, 1))
+            batch["output_audio"] = []
+            for i in range(len(batch["output_melspec"])):
+                batch["output_audio"].append(self.vocoder.inference(
+                (batch["output_melspec"][i][~batch["output_mask"][i].detach()])
+                ))
         loss_dict = self.criterion(**batch)
         batch["loss"] = loss_dict["loss"]
         if is_train:
