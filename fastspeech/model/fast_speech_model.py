@@ -99,9 +99,9 @@ def length_regulation(inputs, durations, device):
     for i in range(batch):
         index = 0
         for j in range(seq_len):
-            try:
+            if durations.dtype != torch.int:
                 curr_len = torch.round(durations[i, j]).int().item()
-            except:
+            else:
                 curr_len = durations[i, j].item()
             final_res[i, index:index + curr_len] = inputs[i, j]
             index += curr_len

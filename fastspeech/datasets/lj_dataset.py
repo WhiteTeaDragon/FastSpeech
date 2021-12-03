@@ -106,8 +106,8 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
         if self.durations is not None:
             duration = self.durations[index].unsqueeze(0)
 
-        return waveform, waveform_length, transcript, tokens, token_lengths,\
-               duration
+        return waveform, waveform_length, transcript, tokens, token_lengths, \
+            duration
 
     def decode(self, tokens, lengths):
         result = []
