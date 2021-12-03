@@ -19,8 +19,8 @@ def collate_fn(instances: List[Tuple]) -> Dict:
     """
     Collate and pad fields in dataset items
     """
-    waveform, waveform_length, transcript, tokens, token_lengths, \
-    audio_spec, melspec_lengths, sr, duration = list(zip(*instances))
+    waveform, waveform_length, transcript, tokens, token_lengths, duration = \
+        list(zip(*instances))
 
     waveform = pad_sequence([
         waveform_[0] for waveform_ in waveform
@@ -36,11 +36,6 @@ def collate_fn(instances: List[Tuple]) -> Dict:
         duration = pad_sequence([
             duration_[0] for duration_ in duration
         ]).transpose(0, 1)
-
-    melspec = pad_sequence([
-        audio_spec_[0].transpose(0, 1) for audio_spec_ in audio_spec
-    ], padding_value=MELSPEC_PAD_VALUE).permute(1, 2, 0)
-    melspec_lengths = torch.cat(melspec_lengths)
 
     mask = build_mask(token_lengths)
 
