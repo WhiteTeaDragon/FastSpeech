@@ -40,6 +40,7 @@ def get_dataloaders(configs: ConfigParser, device):
     return dataloaders
 
 
+# from https://github.com/xcmyz/FastSpeech/blob/master/text/cleaners.py
 _abbreviations = [(re.compile('\\b%s\\.' % x[0], re.IGNORECASE), x[1]) for x in
                   [
     ('mrs', 'misess'),

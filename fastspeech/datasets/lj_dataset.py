@@ -5,6 +5,7 @@ import librosa
 import numpy as np
 import torchaudio
 import torch
+from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from speechbrain.utils.data_utils import download_file
@@ -84,7 +85,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
             if config_parser["overfit_on_one_batch"] == "True":
                 dataloader = [next(iter(dataloader))]
             len_epoch = len(dataloader)
-            durations = None
+            durations = []
             for batch_idx, batch in enumerate(
                     tqdm(dataloader, desc="graphemes", total=len_epoch)
             ):
@@ -102,10 +103,8 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
                     coeff = batch["melspec_lengths"]
                     curr_durations *= coeff.repeat(curr_durations.shape[-1],
                                                    1).transpose(0, 1)
-                if durations is None:
-                    durations = curr_durations
-                else:
-                    durations = torch.cat((durations, curr_durations))
+                durations.append(curr_durations)
+            durations = torch.cat(pad_sequence(durations)).transpose(0, 1)
             np.save(durations_file, durations)
         return durations
 
