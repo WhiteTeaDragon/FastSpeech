@@ -103,7 +103,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
                     coeff = batch["melspec_lengths"]
                     curr_durations *= coeff.repeat(curr_durations.shape[-1],
                                                    1).transpose(0, 1)
-                durations.append(curr_durations.transpose(0, 1))
+                durations += list(curr_durations)
             durations = pad_sequence(durations)
             durations = durations.reshape(durations.shape[0], -1).transpose(0,
                                                                             1)
