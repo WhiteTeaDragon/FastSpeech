@@ -145,12 +145,11 @@ class Trainer(BaseTrainer):
                 self.writer.add_scalar(
                     "learning rate", get_lr(self.optimizer)
                 )
-                self._log_one_prediction(batch["text"], batch["output_audio"],
-                                         batch["sample_rate"])
+                self._log_one_prediction(batch["text"], batch["output_audio"])
                 self._log_spectrogram(batch["melspec"],
                                       batch["output_melspec"])
                 self._log_scalars(self.train_metrics)
-                self._log_audio(batch["audio"], batch["sample_rate"], "train")
+                self._log_audio(batch["audio"], "train")
                 self._log_attention(batch["attention"], part="train")
             if batch_idx >= self.len_epoch:
                 break
@@ -184,7 +183,6 @@ class Trainer(BaseTrainer):
     def process_batch(self, batch, is_train: bool, metrics: MetricTracker):
         audio_spec, sr = self.get_spectogram(batch["audio"])
         batch["melspec"] = audio_spec
-        batch["sample_rate"] = sr
         batch = self.move_batch_to_device(batch, self.device)
         if is_train:
             self.optimizer.zero_grad()
@@ -239,10 +237,9 @@ class Trainer(BaseTrainer):
                 )
             self.writer.set_step(epoch * self.len_epoch, "valid")
             self._log_scalars(self.valid_metrics)
-            self._log_one_prediction(batch["text"], batch["output_audio"],
-                                     batch["sample_rate"])
+            self._log_one_prediction(batch["text"], batch["output_audio"])
             self._log_spectrogram(batch["melspec"], batch["output_melspec"])
-            self._log_audio(batch["audio"], batch["sample_rate"], part="val")
+            self._log_audio(batch["audio"], part="val")
             self._log_attention(batch["attention"], part="val")
 
         # add histogram of model parameters to the tensorboard
@@ -260,15 +257,14 @@ class Trainer(BaseTrainer):
             total = self.len_epoch
         return base.format(current, total, 100.0 * current / total)
 
-    def _log_one_prediction(self, text, output_audio, sample_rates):
+    def _log_one_prediction(self, text, output_audio):
         if self.writer is None:
             return
         log_index = torch.randint(low=0, high=len(text), size=(1,)).item()
         to_log_text = text[log_index]
         to_log_audio = output_audio[log_index]
-        to_log_sample_rate = sample_rates[log_index]
         self.writer.add_text("text input", to_log_text)
-        self.writer.add_audio("audio output", to_log_audio, to_log_sample_rate)
+        self.writer.add_audio("audio output", to_log_audio)
 
     def _log_spectrogram(self, target_spectrograms, spectrogram_batch):
         log_index = torch.randint(low=0, high=len(target_spectrograms),
@@ -304,10 +300,10 @@ class Trainer(BaseTrainer):
             self.writer.add_scalar(f"{metric_name}",
                                    metric_tracker.avg(metric_name))
 
-    def _log_audio(self, audio_batch, sample_rates, part):
+    def _log_audio(self, audio_batch, part):
         index = random.choice(range(len(audio_batch)))
         audio = audio_batch[index]
-        sample_rate = sample_rates[index]
+        sample_rate = self.config["preprocessing"]["sr"]
         self.writer.add_audio("audio target" + part, audio, sample_rate)
 
     def _log_attention(self, attention, part):
