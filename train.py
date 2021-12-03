@@ -70,6 +70,7 @@ def main(config):
         loss_module,
         metrics,
         optimizer,
+        log_step=config["trainer"]["log_step"],
         config=config,
         device=device,
         data_loader=dataloaders["train"],
