@@ -166,9 +166,10 @@ class FastSpeechModel(BaseModel):
             inputs, att = self.fft1[i](inputs, mask)
             attention.append(att)
         duration_prediction = self.duration_predictor(inputs)
-        if duration is None:
+        if not self.training:
             inputs, mask = length_regulation(inputs,
-                                             torch.exp(duration_prediction),
+                                             torch.exp(duration_prediction) *
+                                             alpha,
                                              device)
         else:
             inputs, mask = length_regulation(inputs, duration * alpha,
