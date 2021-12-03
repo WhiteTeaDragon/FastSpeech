@@ -1,4 +1,5 @@
 import logging
+import shutil
 
 import librosa
 import numpy as np
@@ -6,6 +7,7 @@ import torchaudio
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from speechbrain.utils.data_utils import download_file
 
 from fastspeech.collate_fn.collate import collate_fn
 from fastspeech.datasets.GraphemeAligner import GraphemeAligner
@@ -16,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
     def __init__(self, device, num_workers, config_parser, aligner_bs,
-                 data_dir=None):
+                 durations_from_outside, data_dir=None):
         if data_dir is None:
             data_dir = ROOT_PATH / "data" / "datasets" / "lj"
             data_dir.mkdir(exist_ok=True, parents=True)
@@ -26,8 +28,11 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
             TACOTRON2_GRIFFINLIM_CHAR_LJSPEECH.get_text_processor()
         self.wave2spec = self.initialize_mel_spec()
         self.durations = None
-        self.durations = self.load_durations(data_dir, device, num_workers,
-                                             config_parser, aligner_bs)
+        if durations_from_outside == "True":
+            self.durations = self.load_durations_from_outside(data_dir)
+        else:
+            self.durations = self.load_durations(data_dir, device, num_workers,
+                                                 config_parser, aligner_bs)
 
     def initialize_mel_spec(self):
         sr = self.config_parser["preprocessing"]["sr"]
@@ -45,6 +50,18 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
         )
         wave2spec.mel_scale.fb.copy_(torch.tensor(mel_basis))
         return wave2spec
+
+    def load_durations_from_outside(self, data_dir):
+        zip_alignments_file = data_dir / "alignments.zip"
+        if not zip_alignments_file.exists():
+            download_file("https://github.com/xcmyz/FastSpeech/raw/master"
+                          "/alignments.zip", zip_alignments_file)
+        shutil.unpack_archive(zip_alignments_file, data_dir)
+        durations = []
+        for fpath in (data_dir / "alignments").iterdir():
+            filename = str(data_dir / fpath.name)
+            durations.append(np.load(filename).unsqueeze(0))
+        return durations
 
     def load_durations(self, data_dir, device, num_workers, config_parser,
                        aligner_bs):
@@ -74,8 +91,6 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
                         batch["audio"].to(device), batch["audio_length"],
                         correct_text
                     )
-                    hop_length = config_parser["preprocessing"]["spectrogram"][
-                        "args"]["hop_length"]
                     coeff = batch["melspec_lengths"]
                     curr_durations *= coeff.repeat(curr_durations.shape[-1],
                                                    1).transpose(0, 1)

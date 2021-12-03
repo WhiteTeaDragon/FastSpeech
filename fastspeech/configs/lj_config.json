@@ -42,7 +42,8 @@
         {
           "type": "LJSpeechDataset",
           "args": {
-            "aligner_bs": 2
+            "aligner_bs": 2,
+            "durations_from_outside": "False"
           }
         }
       ]
