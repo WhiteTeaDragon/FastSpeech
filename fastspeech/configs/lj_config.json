@@ -35,24 +35,23 @@
   },
   "data": {
     "all": {
-      "batch_size": 1,
+      "batch_size": 2,
       "num_workers": 5,
       "test_share": 0.2,
       "datasets": [
         {
           "type": "LJSpeechDataset",
           "args": {
-            "aligner_bs": 1
+            "aligner_bs": 2
           }
         }
       ]
     }
   },
   "optimizer": {
-    "type": "AdamW",
+    "type": "Adam",
     "args": {
-      "lr": 3e-4,
-      "weight_decay": 1e-5
+      "lr": 3e-4
     }
   },
   "lr_scheduler": {

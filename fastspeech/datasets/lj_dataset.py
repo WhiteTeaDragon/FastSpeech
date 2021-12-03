@@ -76,7 +76,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
                     )
                     hop_length = config_parser["preprocessing"]["spectrogram"][
                         "args"]["hop_length"]
-                    coeff = (batch["audio_length"] / hop_length)
+                    coeff = batch["melspec_lengths"]
                     curr_durations *= coeff.repeat(curr_durations.shape[-1],
                                                    1).transpose(0, 1)
                 if durations is None:
