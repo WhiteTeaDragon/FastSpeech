@@ -70,7 +70,7 @@
   "trainer": {
     "epochs": 9,
     "save_dir": "saved/",
-    "save_period": 5,
+    "save_period": 3,
     "verbosity": 2,
     "monitor": "min val_loss",
     "log_step": 100,

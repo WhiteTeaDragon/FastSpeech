@@ -72,10 +72,9 @@
   "trainer": {
     "epochs": 9,
     "save_dir": "saved/",
-    "save_period": 50,
+    "save_period": 3,
     "verbosity": 2,
     "monitor": "min val_loss",
-    "len_epoch": 1,
     "log_step": 100,
     "early_stop": 100,
     "wandb_project": "fastspeech",
