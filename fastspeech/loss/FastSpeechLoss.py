@@ -11,7 +11,6 @@ class FastSpeechLoss(torch.nn.Module):
                           kwargs["duration"].shape[-1])
         zero_mask = torch.isclose(kwargs["duration"][..., :slice_until].float(),
                                   torch.tensor(0).float())
-        print(kwargs["output_duration"][..., :slice_until][zero_mask].mean())
         log_durations = torch.log(kwargs["duration"][..., :slice_until])
         log_durations[zero_mask] = -7
         duration_loss = torch.nn.functional.mse_loss(kwargs["output_duration"][
