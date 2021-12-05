@@ -9,9 +9,13 @@ class FastSpeechLoss(torch.nn.Module):
     def forward(self, *args, **kwargs) -> dict:
         slice_until = min(kwargs["output_duration"].shape[-1],
                           kwargs["duration"].shape[-1])
-        duration_loss = torch.nn.functional.mse_loss(torch.exp(
-            kwargs["output_duration"][..., :slice_until]),
-            kwargs["duration"][..., :slice_until].float())
+        zero_mask = torch.isclose(kwargs["duration"][..., :slice_until],
+                                  torch.tensor(0))
+        log_durations = torch.log(kwargs["duration"][..., :slice_until])
+        log_durations[zero_mask] = -20
+        duration_loss = torch.nn.functional.mse_loss(kwargs["output_duration"][
+                                                     ..., :slice_until],
+                                                     log_durations)
         slice_until = min(kwargs["output_melspec"].shape[-1],
                           kwargs["melspec"].shape[-1])
         mask = ~kwargs["output_mask"].detach()
