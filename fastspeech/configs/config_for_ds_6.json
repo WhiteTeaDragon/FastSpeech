@@ -68,7 +68,8 @@
   "loss": {
     "type": "FastSpeechLoss",
     "args": {
-      "alpha": 5
+      "alpha": 5,
+      "mode": "exp"
     }
   },
   "trainer": {
