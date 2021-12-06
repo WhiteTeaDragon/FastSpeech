@@ -96,7 +96,7 @@ class Trainer(BaseTrainer):
         """
         for tensor_for_gpu in ["audio", "audio_length", "text_encoded",
                                "token_lengths", "melspec", "duration", "mask"]:
-            if batch[tensor_for_gpu] is not None:
+            if tensor_for_gpu in batch and batch[tensor_for_gpu] is not None:
                 batch[tensor_for_gpu] = batch[tensor_for_gpu].to(device)
         return batch
 
