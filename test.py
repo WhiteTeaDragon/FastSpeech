@@ -117,6 +117,8 @@ if __name__ == "__main__":
         url = "https://drive.google.com/" \
               "uc?id=1cyUYmx55_w4UEhL-GzZC5UlevMl4mjUB"
         path_to_checkpoint = str(DEFAULT_CHECKPOINT_PATH.absolute().resolve())
+        checkpoint_dir = ROOT_PATH / "default_test_model"
+        checkpoint_dir.mkdir(exist_ok=True, parents=True)
         if not Path(path_to_checkpoint).exists():
             gdown.download(url, path_to_checkpoint, quiet=False)
     else:
