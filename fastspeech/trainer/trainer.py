@@ -96,7 +96,8 @@ class Trainer(BaseTrainer):
         """
         for tensor_for_gpu in ["audio", "audio_length", "text_encoded",
                                "token_lengths", "melspec", "duration", "mask"]:
-            batch[tensor_for_gpu] = batch[tensor_for_gpu].to(device)
+            if batch[tensor_for_gpu] is not None:
+                batch[tensor_for_gpu] = batch[tensor_for_gpu].to(device)
         return batch
 
     def _clip_grad_norm(self):
