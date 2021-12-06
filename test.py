@@ -55,6 +55,7 @@ def main(config, out_file):
                         "output_mask"][i].detach()]).transpose(0, 1).unsqueeze(
                         0)
                 ))
+    out_file = Path(out_file)
     out_file.mkdir(exist_ok=True, parents=True)
     for i in range(len(audios)):
         path = out_file / f"{i}.wav"
