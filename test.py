@@ -60,7 +60,7 @@ def main(config, out_file):
     for i in range(len(audios)):
         path = out_file / f"{i}.wav"
         sr = config["preprocessing"]["sr"]
-        torchaudio.save(path, audios[i], sr)
+        torchaudio.save(path, audios[i].cpu(), sr)
 
 
 if __name__ == "__main__":
