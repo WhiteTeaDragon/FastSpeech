@@ -30,3 +30,6 @@ class TestDataset(Dataset):
         tokens, token_lengths = self._tokenizer(transcript)
 
         return transcript, tokens, token_lengths
+
+    def __len__(self):
+        return len(self.texts)
