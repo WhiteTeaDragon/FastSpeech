@@ -1,0 +1,85 @@
+{
+  "name": "lj_config",
+  "n_gpu": 1,
+  "overfit_on_one_batch": "False",
+  "preprocessing": {
+    "sr": 22050,
+    "spectrogram": {
+      "type": "MelSpectrogram",
+      "args": {
+        "n_mels": 80,
+        "win_length": 1024,
+        "hop_length": 256,
+        "n_fft": 1024,
+        "f_min": 0,
+        "f_max": 8000,
+        "power": 1.0
+      }
+    }
+  },
+  "arch": {
+    "type": "FastSpeechModel",
+    "args": {
+        "emb_size": 384,
+        "max_len": 5000,
+        "num_blocks": 6,
+        "n_heads": 2,
+        "kernel_size": 3,
+        "fft_hidden_size": 1536,
+        "dropout_p": 0.1,
+        "predictor_hidden_size": 256,
+        "predictor_kernel_size": 3,
+        "alpha": 1,
+        "mels": 80
+    }
+  },
+  "data": {
+    "all": {
+      "batch_size": 32,
+      "num_workers": 5,
+      "test_size": 32,
+      "datasets": [
+        {
+          "type": "LJSpeechDataset",
+          "args": {
+            "aligner_bs": 2,
+            "durations_from_outside": "True"
+          }
+        }
+      ]
+    }
+  },
+  "optimizer": {
+    "type": "Adam",
+    "args": {
+      "lr": 3e-4
+    }
+  },
+  "lr_scheduler": {
+    "use": "False",
+    "type": "CosineAnnealingLR",
+    "frequency": "batch",
+    "args": {
+      "T_max": 150
+    }
+  },
+  "loss": {
+    "type": "FastSpeechLoss",
+    "args": {
+      "alpha": 5,
+      "mode": "exp"
+    }
+  },
+  "trainer": {
+    "epochs": 250,
+    "save_dir": "saved/",
+    "save_period": 5,
+    "verbosity": 2,
+    "monitor": "min val_loss",
+    "log_step": 100,
+    "early_stop": 100,
+    "wandb_project": "fastspeech",
+    "grad_norm_clip": 2,
+    "beam_search": "False"
+  }
+}
