@@ -19,8 +19,20 @@ def collate_fn(instances: List[Tuple]) -> Dict:
     """
     Collate and pad fields in dataset items
     """
+    input_data = list(zip(*instances))
+
+    if len(input_data) == 3:
+        transcript, tokens, token_lengths = input_data
+        tokens = pad_sequence([
+            tokens_[0] for tokens_ in tokens
+        ]).transpose(0, 1)
+        token_lengths = torch.cat(token_lengths)
+
+        return {"text": transcript, "text_encoded": tokens,
+                "token_lengths": token_lengths}
+
     waveform, waveform_length, transcript, tokens, token_lengths, duration = \
-        list(zip(*instances))
+        input_data
 
     waveform = pad_sequence([
         waveform_[0] for waveform_ in waveform

@@ -1,0 +1,15 @@
+{
+  "data": {
+    "test": {
+      "batch_size": 3,
+      "num_workers": 1,
+      "datasets": [
+        {
+          "type": "TestDataset",
+          "args": {
+          }
+        }
+      ]
+    }
+  }
+}
