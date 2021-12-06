@@ -27,29 +27,30 @@ def collate_fn(instances: List[Tuple]) -> Dict:
             tokens_[0] for tokens_ in tokens
         ]).transpose(0, 1)
         token_lengths = torch.cat(token_lengths)
+        waveform = None
+        waveform_length = None
+        duration = None
+        mask = None
+    else:
+        waveform, waveform_length, transcript, tokens, token_lengths, duration = \
+            input_data
 
-        return {"text": transcript, "text_encoded": tokens,
-                "token_lengths": token_lengths}
-
-    waveform, waveform_length, transcript, tokens, token_lengths, duration = \
-        input_data
-
-    waveform = pad_sequence([
-        waveform_[0] for waveform_ in waveform
-    ]).transpose(0, 1)
-    waveform_length = torch.cat(waveform_length)
-
-    tokens = pad_sequence([
-        tokens_[0] for tokens_ in tokens
-    ]).transpose(0, 1)
-    token_lengths = torch.cat(token_lengths)
-
-    if duration is not None and duration[0] is not None:
-        duration = pad_sequence([
-            duration_[0] for duration_ in duration
+        waveform = pad_sequence([
+            waveform_[0] for waveform_ in waveform
         ]).transpose(0, 1)
+        waveform_length = torch.cat(waveform_length)
 
-    mask = build_mask(token_lengths)
+        tokens = pad_sequence([
+            tokens_[0] for tokens_ in tokens
+        ]).transpose(0, 1)
+        token_lengths = torch.cat(token_lengths)
+
+        if duration is not None and duration[0] is not None:
+            duration = pad_sequence([
+                duration_[0] for duration_ in duration
+            ]).transpose(0, 1)
+
+        mask = build_mask(token_lengths)
 
     return {"audio": waveform, "audio_length": waveform_length,
             "text": transcript, "text_encoded": tokens,
